@@ -3,8 +3,11 @@ module github.com/jenmud/consensus
 go 1.19
 
 require (
+	entgo.io/contrib v0.3.4
 	entgo.io/ent v0.11.5
 	github.com/99designs/gqlgen v0.17.22
+	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/spf13/cobra v1.6.1
 )
 
 require (
@@ -22,7 +25,6 @@ require (
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/urfave/cli/v2 v2.8.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.1 // indirect

@@ -6,5 +6,6 @@ package main
 import (
 	_ "entgo.io/ent/cmd/ent"
 	_ "github.com/99designs/gqlgen"
+	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/spf13/cobra/cobra"
 )
