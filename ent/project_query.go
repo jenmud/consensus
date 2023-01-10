@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
@@ -25,6 +27,7 @@ type ProjectQuery struct {
 	fields       []string
 	inters       []Interceptor
 	predicates   []predicate.Project
+	withEpics    *EpicQuery
 	withReporter *UserQuery
 	withAssignee *UserQuery
 	withFKs      bool
@@ -62,6 +65,28 @@ func (pq *ProjectQuery) Unique(unique bool) *ProjectQuery {
 func (pq *ProjectQuery) Order(o ...OrderFunc) *ProjectQuery {
 	pq.order = append(pq.order, o...)
 	return pq
+}
+
+// QueryEpics chains the current query on the "epics" edge.
+func (pq *ProjectQuery) QueryEpics() *EpicQuery {
+	query := (&EpicClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(epic.Table, epic.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, project.EpicsTable, project.EpicsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryReporter chains the current query on the "reporter" edge.
@@ -299,6 +324,7 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		order:        append([]OrderFunc{}, pq.order...),
 		inters:       append([]Interceptor{}, pq.inters...),
 		predicates:   append([]predicate.Project{}, pq.predicates...),
+		withEpics:    pq.withEpics.Clone(),
 		withReporter: pq.withReporter.Clone(),
 		withAssignee: pq.withAssignee.Clone(),
 		// clone intermediate query.
@@ -306,6 +332,17 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		path:   pq.path,
 		unique: pq.unique,
 	}
+}
+
+// WithEpics tells the query-builder to eager-load the nodes that are connected to
+// the "epics" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithEpics(opts ...func(*EpicQuery)) *ProjectQuery {
+	query := (&EpicClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withEpics = query
+	return pq
 }
 
 // WithReporter tells the query-builder to eager-load the nodes that are connected to
@@ -409,7 +446,8 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		nodes       = []*Project{}
 		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
+			pq.withEpics != nil,
 			pq.withReporter != nil,
 			pq.withAssignee != nil,
 		}
@@ -438,6 +476,13 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := pq.withEpics; query != nil {
+		if err := pq.loadEpics(ctx, query, nodes,
+			func(n *Project) { n.Edges.Epics = []*Epic{} },
+			func(n *Project, e *Epic) { n.Edges.Epics = append(n.Edges.Epics, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := pq.withReporter; query != nil {
 		if err := pq.loadReporter(ctx, query, nodes, nil,
 			func(n *Project, e *User) { n.Edges.Reporter = e }); err != nil {
@@ -453,6 +498,37 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	return nodes, nil
 }
 
+func (pq *ProjectQuery) loadEpics(ctx context.Context, query *EpicQuery, nodes []*Project, init func(*Project), assign func(*Project, *Epic)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Project)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Epic(func(s *sql.Selector) {
+		s.Where(sql.InValues(project.EpicsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.epic_project
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "epic_project" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "epic_project" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 func (pq *ProjectQuery) loadReporter(ctx context.Context, query *UserQuery, nodes []*Project, init func(*Project), assign func(*Project, *User)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Project)

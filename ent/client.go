@@ -251,6 +251,22 @@ func (c *EpicClient) GetX(ctx context.Context, id int) *Epic {
 	return obj
 }
 
+// QueryProject queries the project edge of a Epic.
+func (c *EpicClient) QueryProject(e *Epic) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(epic.Table, epic.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, epic.ProjectTable, epic.ProjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *EpicClient) Hooks() []Hook {
 	return c.hooks.Epic
@@ -366,6 +382,22 @@ func (c *ProjectClient) GetX(ctx context.Context, id int) *Project {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryEpics queries the epics edge of a Project.
+func (c *ProjectClient) QueryEpics(pr *Project) *EpicQuery {
+	query := (&EpicClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(epic.Table, epic.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, project.EpicsTable, project.EpicsColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // QueryReporter queries the reporter edge of a Project.

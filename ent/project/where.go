@@ -203,6 +203,33 @@ func DescriptionContainsFold(v string) predicate.Project {
 	return predicate.Project(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// HasEpics applies the HasEdge predicate on the "epics" edge.
+func HasEpics() predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, EpicsTable, EpicsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEpicsWith applies the HasEdge predicate on the "epics" edge with a given conditions (other predicates).
+func HasEpicsWith(preds ...predicate.Epic) predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(EpicsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, EpicsTable, EpicsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasReporter applies the HasEdge predicate on the "reporter" edge.
 func HasReporter() predicate.Project {
 	return predicate.Project(func(s *sql.Selector) {

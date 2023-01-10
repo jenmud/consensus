@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
@@ -54,6 +55,21 @@ func (pu *ProjectUpdate) ClearDescription() *ProjectUpdate {
 	return pu
 }
 
+// AddEpicIDs adds the "epics" edge to the Epic entity by IDs.
+func (pu *ProjectUpdate) AddEpicIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.AddEpicIDs(ids...)
+	return pu
+}
+
+// AddEpics adds the "epics" edges to the Epic entity.
+func (pu *ProjectUpdate) AddEpics(e ...*Epic) *ProjectUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return pu.AddEpicIDs(ids...)
+}
+
 // SetReporterID sets the "reporter" edge to the User entity by ID.
 func (pu *ProjectUpdate) SetReporterID(id int) *ProjectUpdate {
 	pu.mutation.SetReporterID(id)
@@ -95,6 +111,27 @@ func (pu *ProjectUpdate) SetAssignee(u *User) *ProjectUpdate {
 // Mutation returns the ProjectMutation object of the builder.
 func (pu *ProjectUpdate) Mutation() *ProjectMutation {
 	return pu.mutation
+}
+
+// ClearEpics clears all "epics" edges to the Epic entity.
+func (pu *ProjectUpdate) ClearEpics() *ProjectUpdate {
+	pu.mutation.ClearEpics()
+	return pu
+}
+
+// RemoveEpicIDs removes the "epics" edge to Epic entities by IDs.
+func (pu *ProjectUpdate) RemoveEpicIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.RemoveEpicIDs(ids...)
+	return pu
+}
+
+// RemoveEpics removes "epics" edges to Epic entities.
+func (pu *ProjectUpdate) RemoveEpics(e ...*Epic) *ProjectUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return pu.RemoveEpicIDs(ids...)
 }
 
 // ClearReporter clears the "reporter" edge to the User entity.
@@ -175,6 +212,60 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.DescriptionCleared() {
 		_spec.ClearField(project.FieldDescription, field.TypeString)
+	}
+	if pu.mutation.EpicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedEpicsIDs(); len(nodes) > 0 && !pu.mutation.EpicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.EpicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if pu.mutation.ReporterCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -292,6 +383,21 @@ func (puo *ProjectUpdateOne) ClearDescription() *ProjectUpdateOne {
 	return puo
 }
 
+// AddEpicIDs adds the "epics" edge to the Epic entity by IDs.
+func (puo *ProjectUpdateOne) AddEpicIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.AddEpicIDs(ids...)
+	return puo
+}
+
+// AddEpics adds the "epics" edges to the Epic entity.
+func (puo *ProjectUpdateOne) AddEpics(e ...*Epic) *ProjectUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return puo.AddEpicIDs(ids...)
+}
+
 // SetReporterID sets the "reporter" edge to the User entity by ID.
 func (puo *ProjectUpdateOne) SetReporterID(id int) *ProjectUpdateOne {
 	puo.mutation.SetReporterID(id)
@@ -333,6 +439,27 @@ func (puo *ProjectUpdateOne) SetAssignee(u *User) *ProjectUpdateOne {
 // Mutation returns the ProjectMutation object of the builder.
 func (puo *ProjectUpdateOne) Mutation() *ProjectMutation {
 	return puo.mutation
+}
+
+// ClearEpics clears all "epics" edges to the Epic entity.
+func (puo *ProjectUpdateOne) ClearEpics() *ProjectUpdateOne {
+	puo.mutation.ClearEpics()
+	return puo
+}
+
+// RemoveEpicIDs removes the "epics" edge to Epic entities by IDs.
+func (puo *ProjectUpdateOne) RemoveEpicIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.RemoveEpicIDs(ids...)
+	return puo
+}
+
+// RemoveEpics removes "epics" edges to Epic entities.
+func (puo *ProjectUpdateOne) RemoveEpics(e ...*Epic) *ProjectUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return puo.RemoveEpicIDs(ids...)
 }
 
 // ClearReporter clears the "reporter" edge to the User entity.
@@ -437,6 +564,60 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if puo.mutation.DescriptionCleared() {
 		_spec.ClearField(project.FieldDescription, field.TypeString)
+	}
+	if puo.mutation.EpicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedEpicsIDs(); len(nodes) > 0 && !puo.mutation.EpicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.EpicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if puo.mutation.ReporterCleared() {
 		edge := &sqlgraph.EdgeSpec{

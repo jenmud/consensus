@@ -11,12 +11,21 @@ const (
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// EdgeEpics holds the string denoting the epics edge name in mutations.
+	EdgeEpics = "epics"
 	// EdgeReporter holds the string denoting the reporter edge name in mutations.
 	EdgeReporter = "reporter"
 	// EdgeAssignee holds the string denoting the assignee edge name in mutations.
 	EdgeAssignee = "assignee"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
+	// EpicsTable is the table that holds the epics relation/edge.
+	EpicsTable = "epics"
+	// EpicsInverseTable is the table name for the Epic entity.
+	// It exists in this package in order to avoid circular dependency with the "epic" package.
+	EpicsInverseTable = "epics"
+	// EpicsColumn is the table column denoting the epics relation/edge.
+	EpicsColumn = "epic_project"
 	// ReporterTable is the table that holds the reporter relation/edge.
 	ReporterTable = "projects"
 	// ReporterInverseTable is the table name for the User entity.

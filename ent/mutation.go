@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
@@ -33,13 +34,16 @@ const (
 // EpicMutation represents an operation that mutates the Epic nodes in the graph.
 type EpicMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Epic, error)
-	predicates    []predicate.Epic
+	op             Op
+	typ            string
+	id             *int
+	name           *string
+	clearedFields  map[string]struct{}
+	project        *int
+	clearedproject bool
+	done           bool
+	oldValue       func(context.Context) (*Epic, error)
+	predicates     []predicate.Epic
 }
 
 var _ ent.Mutation = (*EpicMutation)(nil)
@@ -140,6 +144,81 @@ func (m *EpicMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
+// SetName sets the "name" field.
+func (m *EpicMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *EpicMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Epic entity.
+// If the Epic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EpicMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *EpicMutation) ResetName() {
+	m.name = nil
+}
+
+// SetProjectID sets the "project" edge to the Project entity by id.
+func (m *EpicMutation) SetProjectID(id int) {
+	m.project = &id
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (m *EpicMutation) ClearProject() {
+	m.clearedproject = true
+}
+
+// ProjectCleared reports if the "project" edge to the Project entity was cleared.
+func (m *EpicMutation) ProjectCleared() bool {
+	return m.clearedproject
+}
+
+// ProjectID returns the "project" edge ID in the mutation.
+func (m *EpicMutation) ProjectID() (id int, exists bool) {
+	if m.project != nil {
+		return *m.project, true
+	}
+	return
+}
+
+// ProjectIDs returns the "project" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ProjectID instead. It exists only for internal usage by the builders.
+func (m *EpicMutation) ProjectIDs() (ids []int) {
+	if id := m.project; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProject resets all changes to the "project" edge.
+func (m *EpicMutation) ResetProject() {
+	m.project = nil
+	m.clearedproject = false
+}
+
 // Where appends a list predicates to the EpicMutation builder.
 func (m *EpicMutation) Where(ps ...predicate.Epic) {
 	m.predicates = append(m.predicates, ps...)
@@ -174,7 +253,10 @@ func (m *EpicMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EpicMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 1)
+	if m.name != nil {
+		fields = append(fields, epic.FieldName)
+	}
 	return fields
 }
 
@@ -182,6 +264,10 @@ func (m *EpicMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *EpicMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case epic.FieldName:
+		return m.Name()
+	}
 	return nil, false
 }
 
@@ -189,6 +275,10 @@ func (m *EpicMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *EpicMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case epic.FieldName:
+		return m.OldName(ctx)
+	}
 	return nil, fmt.Errorf("unknown Epic field %s", name)
 }
 
@@ -197,6 +287,13 @@ func (m *EpicMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *EpicMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case epic.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Epic field %s", name)
 }
@@ -218,6 +315,8 @@ func (m *EpicMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *EpicMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Epic numeric field %s", name)
 }
 
@@ -243,24 +342,38 @@ func (m *EpicMutation) ClearField(name string) error {
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *EpicMutation) ResetField(name string) error {
+	switch name {
+	case epic.FieldName:
+		m.ResetName()
+		return nil
+	}
 	return fmt.Errorf("unknown Epic field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EpicMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.project != nil {
+		edges = append(edges, epic.EdgeProject)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *EpicMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case epic.EdgeProject:
+		if id := m.project; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EpicMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -272,25 +385,42 @@ func (m *EpicMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EpicMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedproject {
+		edges = append(edges, epic.EdgeProject)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *EpicMutation) EdgeCleared(name string) bool {
+	switch name {
+	case epic.EdgeProject:
+		return m.clearedproject
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *EpicMutation) ClearEdge(name string) error {
+	switch name {
+	case epic.EdgeProject:
+		m.ClearProject()
+		return nil
+	}
 	return fmt.Errorf("unknown Epic unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *EpicMutation) ResetEdge(name string) error {
+	switch name {
+	case epic.EdgeProject:
+		m.ResetProject()
+		return nil
+	}
 	return fmt.Errorf("unknown Epic edge %s", name)
 }
 
@@ -303,6 +433,9 @@ type ProjectMutation struct {
 	name            *string
 	description     *string
 	clearedFields   map[string]struct{}
+	epics           map[int]struct{}
+	removedepics    map[int]struct{}
+	clearedepics    bool
 	reporter        *int
 	clearedreporter bool
 	assignee        *int
@@ -493,6 +626,60 @@ func (m *ProjectMutation) DescriptionCleared() bool {
 func (m *ProjectMutation) ResetDescription() {
 	m.description = nil
 	delete(m.clearedFields, project.FieldDescription)
+}
+
+// AddEpicIDs adds the "epics" edge to the Epic entity by ids.
+func (m *ProjectMutation) AddEpicIDs(ids ...int) {
+	if m.epics == nil {
+		m.epics = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.epics[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEpics clears the "epics" edge to the Epic entity.
+func (m *ProjectMutation) ClearEpics() {
+	m.clearedepics = true
+}
+
+// EpicsCleared reports if the "epics" edge to the Epic entity was cleared.
+func (m *ProjectMutation) EpicsCleared() bool {
+	return m.clearedepics
+}
+
+// RemoveEpicIDs removes the "epics" edge to the Epic entity by IDs.
+func (m *ProjectMutation) RemoveEpicIDs(ids ...int) {
+	if m.removedepics == nil {
+		m.removedepics = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.epics, ids[i])
+		m.removedepics[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEpics returns the removed IDs of the "epics" edge to the Epic entity.
+func (m *ProjectMutation) RemovedEpicsIDs() (ids []int) {
+	for id := range m.removedepics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EpicsIDs returns the "epics" edge IDs in the mutation.
+func (m *ProjectMutation) EpicsIDs() (ids []int) {
+	for id := range m.epics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEpics resets all changes to the "epics" edge.
+func (m *ProjectMutation) ResetEpics() {
+	m.epics = nil
+	m.clearedepics = false
+	m.removedepics = nil
 }
 
 // SetReporterID sets the "reporter" edge to the User entity by id.
@@ -732,7 +919,10 @@ func (m *ProjectMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProjectMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.epics != nil {
+		edges = append(edges, project.EdgeEpics)
+	}
 	if m.reporter != nil {
 		edges = append(edges, project.EdgeReporter)
 	}
@@ -746,6 +936,12 @@ func (m *ProjectMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case project.EdgeEpics:
+		ids := make([]ent.Value, 0, len(m.epics))
+		for id := range m.epics {
+			ids = append(ids, id)
+		}
+		return ids
 	case project.EdgeReporter:
 		if id := m.reporter; id != nil {
 			return []ent.Value{*id}
@@ -760,19 +956,33 @@ func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProjectMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.removedepics != nil {
+		edges = append(edges, project.EdgeEpics)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ProjectMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case project.EdgeEpics:
+		ids := make([]ent.Value, 0, len(m.removedepics))
+		for id := range m.removedepics {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProjectMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.clearedepics {
+		edges = append(edges, project.EdgeEpics)
+	}
 	if m.clearedreporter {
 		edges = append(edges, project.EdgeReporter)
 	}
@@ -786,6 +996,8 @@ func (m *ProjectMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ProjectMutation) EdgeCleared(name string) bool {
 	switch name {
+	case project.EdgeEpics:
+		return m.clearedepics
 	case project.EdgeReporter:
 		return m.clearedreporter
 	case project.EdgeAssignee:
@@ -812,6 +1024,9 @@ func (m *ProjectMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ProjectMutation) ResetEdge(name string) error {
 	switch name {
+	case project.EdgeEpics:
+		m.ResetEpics()
+		return nil
 	case project.EdgeReporter:
 		m.ResetReporter()
 		return nil

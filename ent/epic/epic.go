@@ -7,13 +7,31 @@ const (
 	Label = "epic"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// EdgeProject holds the string denoting the project edge name in mutations.
+	EdgeProject = "project"
 	// Table holds the table name of the epic in the database.
 	Table = "epics"
+	// ProjectTable is the table that holds the project relation/edge.
+	ProjectTable = "epics"
+	// ProjectInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectInverseTable = "projects"
+	// ProjectColumn is the table column denoting the project relation/edge.
+	ProjectColumn = "epic_project"
 )
 
 // Columns holds all SQL columns for epic fields.
 var Columns = []string{
 	FieldID,
+	FieldName,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "epics"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"epic_project",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -23,5 +41,15 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
 	return false
 }
+
+var (
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
+)

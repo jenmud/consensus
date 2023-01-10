@@ -12,18 +12,21 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
+	"github.com/jenmud/consensus/ent/project"
 )
 
 // EpicQuery is the builder for querying Epic entities.
 type EpicQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	inters     []Interceptor
-	predicates []predicate.Epic
+	limit       *int
+	offset      *int
+	unique      *bool
+	order       []OrderFunc
+	fields      []string
+	inters      []Interceptor
+	predicates  []predicate.Epic
+	withProject *ProjectQuery
+	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +61,28 @@ func (eq *EpicQuery) Unique(unique bool) *EpicQuery {
 func (eq *EpicQuery) Order(o ...OrderFunc) *EpicQuery {
 	eq.order = append(eq.order, o...)
 	return eq
+}
+
+// QueryProject chains the current query on the "project" edge.
+func (eq *EpicQuery) QueryProject() *ProjectQuery {
+	query := (&ProjectClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(epic.Table, epic.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, epic.ProjectTable, epic.ProjectColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Epic entity from the query.
@@ -245,12 +270,13 @@ func (eq *EpicQuery) Clone() *EpicQuery {
 		return nil
 	}
 	return &EpicQuery{
-		config:     eq.config,
-		limit:      eq.limit,
-		offset:     eq.offset,
-		order:      append([]OrderFunc{}, eq.order...),
-		inters:     append([]Interceptor{}, eq.inters...),
-		predicates: append([]predicate.Epic{}, eq.predicates...),
+		config:      eq.config,
+		limit:       eq.limit,
+		offset:      eq.offset,
+		order:       append([]OrderFunc{}, eq.order...),
+		inters:      append([]Interceptor{}, eq.inters...),
+		predicates:  append([]predicate.Epic{}, eq.predicates...),
+		withProject: eq.withProject.Clone(),
 		// clone intermediate query.
 		sql:    eq.sql.Clone(),
 		path:   eq.path,
@@ -258,8 +284,31 @@ func (eq *EpicQuery) Clone() *EpicQuery {
 	}
 }
 
+// WithProject tells the query-builder to eager-load the nodes that are connected to
+// the "project" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EpicQuery) WithProject(opts ...func(*ProjectQuery)) *EpicQuery {
+	query := (&ProjectClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withProject = query
+	return eq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Epic.Query().
+//		GroupBy(epic.FieldName).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (eq *EpicQuery) GroupBy(field string, fields ...string) *EpicGroupBy {
 	eq.fields = append([]string{field}, fields...)
 	grbuild := &EpicGroupBy{build: eq}
@@ -271,6 +320,16 @@ func (eq *EpicQuery) GroupBy(field string, fields ...string) *EpicGroupBy {
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//	}
+//
+//	client.Epic.Query().
+//		Select(epic.FieldName).
+//		Scan(ctx, &v)
 func (eq *EpicQuery) Select(fields ...string) *EpicSelect {
 	eq.fields = append(eq.fields, fields...)
 	sbuild := &EpicSelect{EpicQuery: eq}
@@ -312,15 +371,26 @@ func (eq *EpicQuery) prepareQuery(ctx context.Context) error {
 
 func (eq *EpicQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Epic, error) {
 	var (
-		nodes = []*Epic{}
-		_spec = eq.querySpec()
+		nodes       = []*Epic{}
+		withFKs     = eq.withFKs
+		_spec       = eq.querySpec()
+		loadedTypes = [1]bool{
+			eq.withProject != nil,
+		}
 	)
+	if eq.withProject != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, epic.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Epic).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Epic{config: eq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -332,7 +402,43 @@ func (eq *EpicQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Epic, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := eq.withProject; query != nil {
+		if err := eq.loadProject(ctx, query, nodes, nil,
+			func(n *Epic, e *Project) { n.Edges.Project = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (eq *EpicQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*Epic, init func(*Epic), assign func(*Epic, *Project)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Epic)
+	for i := range nodes {
+		if nodes[i].epic_project == nil {
+			continue
+		}
+		fk := *nodes[i].epic_project
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(project.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "epic_project" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (eq *EpicQuery) sqlCount(ctx context.Context) (int, error) {

@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
 )
@@ -38,6 +39,21 @@ func (pc *ProjectCreate) SetNillableDescription(s *string) *ProjectCreate {
 		pc.SetDescription(*s)
 	}
 	return pc
+}
+
+// AddEpicIDs adds the "epics" edge to the Epic entity by IDs.
+func (pc *ProjectCreate) AddEpicIDs(ids ...int) *ProjectCreate {
+	pc.mutation.AddEpicIDs(ids...)
+	return pc
+}
+
+// AddEpics adds the "epics" edges to the Epic entity.
+func (pc *ProjectCreate) AddEpics(e ...*Epic) *ProjectCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return pc.AddEpicIDs(ids...)
 }
 
 // SetReporterID sets the "reporter" edge to the User entity by ID.
@@ -159,6 +175,25 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if nodes := pc.mutation.EpicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   project.EpicsTable,
+			Columns: []string{project.EpicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := pc.mutation.ReporterIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

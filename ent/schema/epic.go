@@ -4,6 +4,8 @@ import (
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
+	"entgo.io/ent/schema/field"
 )
 
 // Epic holds the schema definition for the Epic entity.
@@ -29,10 +31,14 @@ func (Epic) Mixins() []ent.Mixin {
 
 // Fields of the Epic.
 func (Epic) Fields() []ent.Field {
-	return nil
+	return []ent.Field{
+		field.String("name").NotEmpty(),
+	}
 }
 
 // Edges of the Epic.
 func (Epic) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("project", Project.Type).Unique(),
+	}
 }

@@ -11,12 +11,22 @@ var (
 	// EpicsColumns holds the columns for the "epics" table.
 	EpicsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "epic_project", Type: field.TypeInt, Nullable: true},
 	}
 	// EpicsTable holds the schema information for the "epics" table.
 	EpicsTable = &schema.Table{
 		Name:       "epics",
 		Columns:    EpicsColumns,
 		PrimaryKey: []*schema.Column{EpicsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "epics_projects_project",
+				Columns:    []*schema.Column{EpicsColumns[2]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// ProjectsColumns holds the columns for the "projects" table.
 	ProjectsColumns = []*schema.Column{
@@ -69,6 +79,7 @@ var (
 )
 
 func init() {
+	EpicsTable.ForeignKeys[0].RefTable = ProjectsTable
 	ProjectsTable.ForeignKeys[0].RefTable = UsersTable
 	ProjectsTable.ForeignKeys[1].RefTable = UsersTable
 }

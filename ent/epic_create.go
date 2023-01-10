@@ -4,11 +4,13 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/jenmud/consensus/ent/epic"
+	"github.com/jenmud/consensus/ent/project"
 )
 
 // EpicCreate is the builder for creating a Epic entity.
@@ -16,6 +18,31 @@ type EpicCreate struct {
 	config
 	mutation *EpicMutation
 	hooks    []Hook
+}
+
+// SetName sets the "name" field.
+func (ec *EpicCreate) SetName(s string) *EpicCreate {
+	ec.mutation.SetName(s)
+	return ec
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (ec *EpicCreate) SetProjectID(id int) *EpicCreate {
+	ec.mutation.SetProjectID(id)
+	return ec
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (ec *EpicCreate) SetNillableProjectID(id *int) *EpicCreate {
+	if id != nil {
+		ec = ec.SetProjectID(*id)
+	}
+	return ec
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (ec *EpicCreate) SetProject(p *Project) *EpicCreate {
+	return ec.SetProjectID(p.ID)
 }
 
 // Mutation returns the EpicMutation object of the builder.
@@ -52,6 +79,14 @@ func (ec *EpicCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (ec *EpicCreate) check() error {
+	if _, ok := ec.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Epic.name"`)}
+	}
+	if v, ok := ec.mutation.Name(); ok {
+		if err := epic.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Epic.name": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -84,6 +119,30 @@ func (ec *EpicCreate) createSpec() (*Epic, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
+	if value, ok := ec.mutation.Name(); ok {
+		_spec.SetField(epic.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if nodes := ec.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   epic.ProjectTable,
+			Columns: []string{epic.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.epic_project = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 

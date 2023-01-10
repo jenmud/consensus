@@ -29,19 +29,30 @@ type Project struct {
 
 // ProjectEdges holds the relations/edges for other nodes in the graph.
 type ProjectEdges struct {
+	// Epics holds the value of the epics edge.
+	Epics []*Epic `json:"epics,omitempty"`
 	// Reporter holds the value of the reporter edge.
 	Reporter *User `json:"reporter,omitempty"`
 	// Assignee holds the value of the assignee edge.
 	Assignee *User `json:"assignee,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
+}
+
+// EpicsOrErr returns the Epics value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) EpicsOrErr() ([]*Epic, error) {
+	if e.loadedTypes[0] {
+		return e.Epics, nil
+	}
+	return nil, &NotLoadedError{edge: "epics"}
 }
 
 // ReporterOrErr returns the Reporter value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ProjectEdges) ReporterOrErr() (*User, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		if e.Reporter == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
@@ -54,7 +65,7 @@ func (e ProjectEdges) ReporterOrErr() (*User, error) {
 // AssigneeOrErr returns the Assignee value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ProjectEdges) AssigneeOrErr() (*User, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		if e.Assignee == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
@@ -127,6 +138,11 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 		}
 	}
 	return nil
+}
+
+// QueryEpics queries the "epics" edge of the Project entity.
+func (pr *Project) QueryEpics() *EpicQuery {
+	return (&ProjectClient{config: pr.config}).QueryEpics(pr)
 }
 
 // QueryReporter queries the "reporter" edge of the Project entity.

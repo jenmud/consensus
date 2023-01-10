@@ -40,6 +40,7 @@ func (Project) Fields() []ent.Field {
 // Edges of the Project.
 func (Project) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("epics", Epic.Type).Ref("project"),
 		edge.From("reporter", User.Type).Ref("reporter").Unique(),
 		edge.From("assignee", User.Type).Ref("assignee").Unique(),
 	}
