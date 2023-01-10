@@ -20,17 +20,20 @@ import (
 // ProjectQuery is the builder for querying Project entities.
 type ProjectQuery struct {
 	config
-	limit        *int
-	offset       *int
-	unique       *bool
-	order        []OrderFunc
-	fields       []string
-	inters       []Interceptor
-	predicates   []predicate.Project
-	withEpics    *EpicQuery
-	withReporter *UserQuery
-	withAssignee *UserQuery
-	withFKs      bool
+	limit          *int
+	offset         *int
+	unique         *bool
+	order          []OrderFunc
+	fields         []string
+	inters         []Interceptor
+	predicates     []predicate.Project
+	withEpics      *EpicQuery
+	withReporter   *UserQuery
+	withAssignee   *UserQuery
+	withFKs        bool
+	modifiers      []func(*sql.Selector)
+	loadTotal      []func(context.Context, []*Project) error
+	withNamedEpics map[string]*EpicQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -467,6 +470,9 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(pq.modifiers) > 0 {
+		_spec.Modifiers = pq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -492,6 +498,18 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	if query := pq.withAssignee; query != nil {
 		if err := pq.loadAssignee(ctx, query, nodes, nil,
 			func(n *Project, e *User) { n.Edges.Assignee = e }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range pq.withNamedEpics {
+		if err := pq.loadEpics(ctx, query, nodes,
+			func(n *Project) { n.appendNamedEpics(name) },
+			func(n *Project, e *Epic) { n.appendNamedEpics(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range pq.loadTotal {
+		if err := pq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -590,6 +608,9 @@ func (pq *ProjectQuery) loadAssignee(ctx context.Context, query *UserQuery, node
 
 func (pq *ProjectQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := pq.querySpec()
+	if len(pq.modifiers) > 0 {
+		_spec.Modifiers = pq.modifiers
+	}
 	_spec.Node.Columns = pq.fields
 	if len(pq.fields) > 0 {
 		_spec.Unique = pq.unique != nil && *pq.unique
@@ -675,6 +696,20 @@ func (pq *ProjectQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedEpics tells the query-builder to eager-load the nodes that are connected to the "epics"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithNamedEpics(name string, opts ...func(*EpicQuery)) *ProjectQuery {
+	query := (&EpicClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if pq.withNamedEpics == nil {
+		pq.withNamedEpics = make(map[string]*EpicQuery)
+	}
+	pq.withNamedEpics[name] = query
+	return pq
 }
 
 // ProjectGroupBy is the group-by builder for Project entities.

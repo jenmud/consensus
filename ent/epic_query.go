@@ -27,6 +27,8 @@ type EpicQuery struct {
 	predicates  []predicate.Epic
 	withProject *ProjectQuery
 	withFKs     bool
+	modifiers   []func(*sql.Selector)
+	loadTotal   []func(context.Context, []*Epic) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -393,6 +395,9 @@ func (eq *EpicQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Epic, e
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(eq.modifiers) > 0 {
+		_spec.Modifiers = eq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -405,6 +410,11 @@ func (eq *EpicQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Epic, e
 	if query := eq.withProject; query != nil {
 		if err := eq.loadProject(ctx, query, nodes, nil,
 			func(n *Epic, e *Project) { n.Edges.Project = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range eq.loadTotal {
+		if err := eq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -443,6 +453,9 @@ func (eq *EpicQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes
 
 func (eq *EpicQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := eq.querySpec()
+	if len(eq.modifiers) > 0 {
+		_spec.Modifiers = eq.modifiers
+	}
 	_spec.Node.Columns = eq.fields
 	if len(eq.fields) > 0 {
 		_spec.Unique = eq.unique != nil && *eq.unique

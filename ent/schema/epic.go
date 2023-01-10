@@ -32,7 +32,7 @@ func (Epic) Mixins() []ent.Mixin {
 // Fields of the Epic.
 func (Epic) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").NotEmpty(),
+		field.String("name").Unique().NotEmpty(),
 	}
 }
 

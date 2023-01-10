@@ -37,6 +37,11 @@ type UserEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
+	// totalCount holds the count of the edges above.
+	totalCount [2]map[string]int
+
+	namedReporter map[string][]*Project
+	namedAssignee map[string][]*Project
 }
 
 // ReporterOrErr returns the Reporter value or an error if the edge
@@ -162,6 +167,54 @@ func (u *User) String() string {
 	builder.WriteString(u.Email)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedReporter returns the Reporter named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedReporter(name string) ([]*Project, error) {
+	if u.Edges.namedReporter == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedReporter[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedReporter(name string, edges ...*Project) {
+	if u.Edges.namedReporter == nil {
+		u.Edges.namedReporter = make(map[string][]*Project)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedReporter[name] = []*Project{}
+	} else {
+		u.Edges.namedReporter[name] = append(u.Edges.namedReporter[name], edges...)
+	}
+}
+
+// NamedAssignee returns the Assignee named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedAssignee(name string) ([]*Project, error) {
+	if u.Edges.namedAssignee == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedAssignee[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedAssignee(name string, edges ...*Project) {
+	if u.Edges.namedAssignee == nil {
+		u.Edges.namedAssignee = make(map[string][]*Project)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedAssignee[name] = []*Project{}
+	} else {
+		u.Edges.namedAssignee[name] = append(u.Edges.namedAssignee[name], edges...)
+	}
 }
 
 // Users is a parsable slice of User.

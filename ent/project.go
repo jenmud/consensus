@@ -38,6 +38,10 @@ type ProjectEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
+	// totalCount holds the count of the edges above.
+	totalCount [3]map[string]int
+
+	namedEpics map[string][]*Epic
 }
 
 // EpicsOrErr returns the Epics value or an error if the edge
@@ -185,6 +189,30 @@ func (pr *Project) String() string {
 	builder.WriteString(pr.Description)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedEpics returns the Epics named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (pr *Project) NamedEpics(name string) ([]*Epic, error) {
+	if pr.Edges.namedEpics == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := pr.Edges.namedEpics[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (pr *Project) appendNamedEpics(name string, edges ...*Epic) {
+	if pr.Edges.namedEpics == nil {
+		pr.Edges.namedEpics = make(map[string][]*Epic)
+	}
+	if len(edges) == 0 {
+		pr.Edges.namedEpics[name] = []*Epic{}
+	} else {
+		pr.Edges.namedEpics[name] = append(pr.Edges.namedEpics[name], edges...)
+	}
 }
 
 // Projects is a parsable slice of Project.

@@ -19,15 +19,19 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	limit        *int
-	offset       *int
-	unique       *bool
-	order        []OrderFunc
-	fields       []string
-	inters       []Interceptor
-	predicates   []predicate.User
-	withReporter *ProjectQuery
-	withAssignee *ProjectQuery
+	limit             *int
+	offset            *int
+	unique            *bool
+	order             []OrderFunc
+	fields            []string
+	inters            []Interceptor
+	predicates        []predicate.User
+	withReporter      *ProjectQuery
+	withAssignee      *ProjectQuery
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*User) error
+	withNamedReporter map[string]*ProjectQuery
+	withNamedAssignee map[string]*ProjectQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -422,6 +426,9 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(uq.modifiers) > 0 {
+		_spec.Modifiers = uq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -442,6 +449,25 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadAssignee(ctx, query, nodes,
 			func(n *User) { n.Edges.Assignee = []*Project{} },
 			func(n *User, e *Project) { n.Edges.Assignee = append(n.Edges.Assignee, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedReporter {
+		if err := uq.loadReporter(ctx, query, nodes,
+			func(n *User) { n.appendNamedReporter(name) },
+			func(n *User, e *Project) { n.appendNamedReporter(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedAssignee {
+		if err := uq.loadAssignee(ctx, query, nodes,
+			func(n *User) { n.appendNamedAssignee(name) },
+			func(n *User, e *Project) { n.appendNamedAssignee(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range uq.loadTotal {
+		if err := uq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -513,6 +539,9 @@ func (uq *UserQuery) loadAssignee(ctx context.Context, query *ProjectQuery, node
 
 func (uq *UserQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := uq.querySpec()
+	if len(uq.modifiers) > 0 {
+		_spec.Modifiers = uq.modifiers
+	}
 	_spec.Node.Columns = uq.fields
 	if len(uq.fields) > 0 {
 		_spec.Unique = uq.unique != nil && *uq.unique
@@ -598,6 +627,34 @@ func (uq *UserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedReporter tells the query-builder to eager-load the nodes that are connected to the "reporter"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedReporter(name string, opts ...func(*ProjectQuery)) *UserQuery {
+	query := (&ProjectClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedReporter == nil {
+		uq.withNamedReporter = make(map[string]*ProjectQuery)
+	}
+	uq.withNamedReporter[name] = query
+	return uq
+}
+
+// WithNamedAssignee tells the query-builder to eager-load the nodes that are connected to the "assignee"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedAssignee(name string, opts ...func(*ProjectQuery)) *UserQuery {
+	query := (&ProjectClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedAssignee == nil {
+		uq.withNamedAssignee = make(map[string]*ProjectQuery)
+	}
+	uq.withNamedAssignee[name] = query
+	return uq
 }
 
 // UserGroupBy is the group-by builder for User entities.

@@ -34,8 +34,8 @@ func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").NotEmpty(),
 		field.String("surname").NotEmpty(),
-		field.String("username").NotEmpty(),
-		field.String("email").NotEmpty(),
+		field.String("username").Unique().NotEmpty(),
+		field.String("email").Unique().NotEmpty(),
 	}
 }
 

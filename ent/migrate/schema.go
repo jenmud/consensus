@@ -11,7 +11,7 @@ var (
 	// EpicsColumns holds the columns for the "epics" table.
 	EpicsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "epic_project", Type: field.TypeInt, Nullable: true},
 	}
 	// EpicsTable holds the schema information for the "epics" table.
@@ -61,8 +61,8 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "surname", Type: field.TypeString},
-		{Name: "username", Type: field.TypeString},
-		{Name: "email", Type: field.TypeString},
+		{Name: "username", Type: field.TypeString, Unique: true},
+		{Name: "email", Type: field.TypeString, Unique: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
