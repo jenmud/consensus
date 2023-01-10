@@ -37,10 +37,33 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Comment struct {
+		Epics    func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Projects func(childComplexity int) int
+		Text     func(childComplexity int) int
+		Users    func(childComplexity int) int
+	}
+
+	CommentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CommentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Epic struct {
-		ID      func(childComplexity int) int
-		Name    func(childComplexity int) int
-		Project func(childComplexity int) int
+		Assignee    func(childComplexity int) int
+		Comments    func(childComplexity int) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Project     func(childComplexity int) int
+		Reporter    func(childComplexity int) int
 	}
 
 	EpicConnection struct {
@@ -62,12 +85,12 @@ type ComplexityRoot struct {
 	}
 
 	Project struct {
-		Assignee    func(childComplexity int) int
+		Comments    func(childComplexity int) int
 		Description func(childComplexity int) int
 		Epics       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
-		Reporter    func(childComplexity int) int
+		Owner       func(childComplexity int) int
 	}
 
 	ProjectConnection struct {
@@ -82,6 +105,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Comments func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.CommentWhereInput) int
 		Epics    func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.EpicWhereInput) int
 		Node     func(childComplexity int, id int) int
 		Nodes    func(childComplexity int, ids []int) int
@@ -91,9 +115,11 @@ type ComplexityRoot struct {
 
 	User struct {
 		Assignee func(childComplexity int) int
+		Comments func(childComplexity int) int
 		Email    func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Name     func(childComplexity int) int
+		Owns     func(childComplexity int) int
 		Reporter func(childComplexity int) int
 		Surname  func(childComplexity int) int
 		Username func(childComplexity int) int
@@ -126,6 +152,97 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Comment.epics":
+		if e.complexity.Comment.Epics == nil {
+			break
+		}
+
+		return e.complexity.Comment.Epics(childComplexity), true
+
+	case "Comment.id":
+		if e.complexity.Comment.ID == nil {
+			break
+		}
+
+		return e.complexity.Comment.ID(childComplexity), true
+
+	case "Comment.projects":
+		if e.complexity.Comment.Projects == nil {
+			break
+		}
+
+		return e.complexity.Comment.Projects(childComplexity), true
+
+	case "Comment.text":
+		if e.complexity.Comment.Text == nil {
+			break
+		}
+
+		return e.complexity.Comment.Text(childComplexity), true
+
+	case "Comment.users":
+		if e.complexity.Comment.Users == nil {
+			break
+		}
+
+		return e.complexity.Comment.Users(childComplexity), true
+
+	case "CommentConnection.edges":
+		if e.complexity.CommentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.CommentConnection.Edges(childComplexity), true
+
+	case "CommentConnection.pageInfo":
+		if e.complexity.CommentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.CommentConnection.PageInfo(childComplexity), true
+
+	case "CommentConnection.totalCount":
+		if e.complexity.CommentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.CommentConnection.TotalCount(childComplexity), true
+
+	case "CommentEdge.cursor":
+		if e.complexity.CommentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.CommentEdge.Cursor(childComplexity), true
+
+	case "CommentEdge.node":
+		if e.complexity.CommentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.CommentEdge.Node(childComplexity), true
+
+	case "Epic.assignee":
+		if e.complexity.Epic.Assignee == nil {
+			break
+		}
+
+		return e.complexity.Epic.Assignee(childComplexity), true
+
+	case "Epic.comments":
+		if e.complexity.Epic.Comments == nil {
+			break
+		}
+
+		return e.complexity.Epic.Comments(childComplexity), true
+
+	case "Epic.description":
+		if e.complexity.Epic.Description == nil {
+			break
+		}
+
+		return e.complexity.Epic.Description(childComplexity), true
+
 	case "Epic.id":
 		if e.complexity.Epic.ID == nil {
 			break
@@ -146,6 +263,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Epic.Project(childComplexity), true
+
+	case "Epic.reporter":
+		if e.complexity.Epic.Reporter == nil {
+			break
+		}
+
+		return e.complexity.Epic.Reporter(childComplexity), true
 
 	case "EpicConnection.edges":
 		if e.complexity.EpicConnection.Edges == nil {
@@ -210,12 +334,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
-	case "Project.assignee":
-		if e.complexity.Project.Assignee == nil {
+	case "Project.comments":
+		if e.complexity.Project.Comments == nil {
 			break
 		}
 
-		return e.complexity.Project.Assignee(childComplexity), true
+		return e.complexity.Project.Comments(childComplexity), true
 
 	case "Project.description":
 		if e.complexity.Project.Description == nil {
@@ -245,12 +369,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Name(childComplexity), true
 
-	case "Project.reporter":
-		if e.complexity.Project.Reporter == nil {
+	case "Project.owner":
+		if e.complexity.Project.Owner == nil {
 			break
 		}
 
-		return e.complexity.Project.Reporter(childComplexity), true
+		return e.complexity.Project.Owner(childComplexity), true
 
 	case "ProjectConnection.edges":
 		if e.complexity.ProjectConnection.Edges == nil {
@@ -286,6 +410,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProjectEdge.Node(childComplexity), true
+
+	case "Query.comments":
+		if e.complexity.Query.Comments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_comments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Comments(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["where"].(*ent.CommentWhereInput)), true
 
 	case "Query.epics":
 		if e.complexity.Query.Epics == nil {
@@ -354,6 +490,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Assignee(childComplexity), true
 
+	case "User.comments":
+		if e.complexity.User.Comments == nil {
+			break
+		}
+
+		return e.complexity.User.Comments(childComplexity), true
+
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -374,6 +517,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Name(childComplexity), true
+
+	case "User.owns":
+		if e.complexity.User.Owns == nil {
+			break
+		}
+
+		return e.complexity.User.Owns(childComplexity), true
 
 	case "User.reporter":
 		if e.complexity.User.Reporter == nil {
@@ -439,11 +589,14 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCommentWhereInput,
+		ec.unmarshalInputCreateCommentInput,
 		ec.unmarshalInputCreateEpicInput,
 		ec.unmarshalInputCreateProjectInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputEpicWhereInput,
 		ec.unmarshalInputProjectWhereInput,
+		ec.unmarshalInputUpdateCommentInput,
 		ec.unmarshalInputUpdateEpicInput,
 		ec.unmarshalInputUpdateProjectInput,
 		ec.unmarshalInputUpdateUserInput,
@@ -495,13 +648,91 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "../ent.graphql", Input: `directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+type Comment implements Node {
+  id: ID!
+  text: String!
+  epics: [Epic!]
+  projects: [Project!]
+  users: [User!]
+}
+"""A connection to a list of items."""
+type CommentConnection {
+  """A list of edges."""
+  edges: [CommentEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type CommentEdge {
+  """The item at the end of the edge."""
+  node: Comment
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""
+CommentWhereInput is used for filtering Comment objects.
+Input was generated by ent.
+"""
+input CommentWhereInput {
+  not: CommentWhereInput
+  and: [CommentWhereInput!]
+  or: [CommentWhereInput!]
+  """id field predicates"""
+  id: ID
+  idNEQ: ID
+  idIn: [ID!]
+  idNotIn: [ID!]
+  idGT: ID
+  idGTE: ID
+  idLT: ID
+  idLTE: ID
+  """text field predicates"""
+  text: String
+  textNEQ: String
+  textIn: [String!]
+  textNotIn: [String!]
+  textGT: String
+  textGTE: String
+  textLT: String
+  textLTE: String
+  textContains: String
+  textHasPrefix: String
+  textHasSuffix: String
+  textEqualFold: String
+  textContainsFold: String
+  """epics edge predicates"""
+  hasEpics: Boolean
+  hasEpicsWith: [EpicWhereInput!]
+  """projects edge predicates"""
+  hasProjects: Boolean
+  hasProjectsWith: [ProjectWhereInput!]
+  """users edge predicates"""
+  hasUsers: Boolean
+  hasUsersWith: [UserWhereInput!]
+}
+"""
+CreateCommentInput is used for create Comment object.
+Input was generated by ent.
+"""
+input CreateCommentInput {
+  text: String!
+  epicIDs: [ID!]
+  projectIDs: [ID!]
+  userIDs: [ID!]
+}
 """
 CreateEpicInput is used for create Epic object.
 Input was generated by ent.
 """
 input CreateEpicInput {
   name: String!
+  description: String!
   projectID: ID
+  reporterID: ID
+  assigneeID: ID
+  commentIDs: [ID!]
 }
 """
 CreateProjectInput is used for create Project object.
@@ -511,8 +742,8 @@ input CreateProjectInput {
   name: String!
   description: String
   epicIDs: [ID!]
-  reporterID: ID
-  assigneeID: ID
+  ownerID: ID
+  commentIDs: [ID!]
 }
 """
 CreateUserInput is used for create User object.
@@ -523,8 +754,10 @@ input CreateUserInput {
   surname: String!
   username: String!
   email: String!
+  ownIDs: [ID!]
   reporterIDs: [ID!]
   assigneeIDs: [ID!]
+  commentIDs: [ID!]
 }
 """
 Define a Relay Cursor type:
@@ -534,7 +767,11 @@ scalar Cursor
 type Epic implements Node {
   id: ID!
   name: String!
+  description: String!
   project: Project
+  reporter: User
+  assignee: User
+  comments: [Comment!]
 }
 """A connection to a list of items."""
 type EpicConnection {
@@ -583,9 +820,32 @@ input EpicWhereInput {
   nameHasSuffix: String
   nameEqualFold: String
   nameContainsFold: String
+  """description field predicates"""
+  description: String
+  descriptionNEQ: String
+  descriptionIn: [String!]
+  descriptionNotIn: [String!]
+  descriptionGT: String
+  descriptionGTE: String
+  descriptionLT: String
+  descriptionLTE: String
+  descriptionContains: String
+  descriptionHasPrefix: String
+  descriptionHasSuffix: String
+  descriptionEqualFold: String
+  descriptionContainsFold: String
   """project edge predicates"""
   hasProject: Boolean
   hasProjectWith: [ProjectWhereInput!]
+  """reporter edge predicates"""
+  hasReporter: Boolean
+  hasReporterWith: [UserWhereInput!]
+  """assignee edge predicates"""
+  hasAssignee: Boolean
+  hasAssigneeWith: [UserWhereInput!]
+  """comments edge predicates"""
+  hasComments: Boolean
+  hasCommentsWith: [CommentWhereInput!]
 }
 """
 An object with an ID.
@@ -621,8 +881,8 @@ type Project implements Node {
   name: String!
   description: String
   epics: [Epic!]
-  reporter: User
-  assignee: User
+  owner: User
+  comments: [Comment!]
 }
 """A connection to a list of items."""
 type ProjectConnection {
@@ -690,12 +950,12 @@ input ProjectWhereInput {
   """epics edge predicates"""
   hasEpics: Boolean
   hasEpicsWith: [EpicWhereInput!]
-  """reporter edge predicates"""
-  hasReporter: Boolean
-  hasReporterWith: [UserWhereInput!]
-  """assignee edge predicates"""
-  hasAssignee: Boolean
-  hasAssigneeWith: [UserWhereInput!]
+  """owner edge predicates"""
+  hasOwner: Boolean
+  hasOwnerWith: [UserWhereInput!]
+  """comments edge predicates"""
+  hasComments: Boolean
+  hasCommentsWith: [CommentWhereInput!]
 }
 type Query {
   """Fetches an object given its ID."""
@@ -708,6 +968,22 @@ type Query {
     """The list of node IDs."""
     ids: [ID!]!
   ): [Node]!
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Filtering options for Comments returned from the connection."""
+    where: CommentWhereInput
+  ): CommentConnection!
   epics(
     """Returns the elements in the list that come after the specified cursor."""
     after: Cursor
@@ -758,13 +1034,33 @@ type Query {
   ): UserConnection!
 }
 """
+UpdateCommentInput is used for update Comment object.
+Input was generated by ent.
+"""
+input UpdateCommentInput {
+  text: String
+  addEpicIDs: [ID!]
+  removeEpicIDs: [ID!]
+  addProjectIDs: [ID!]
+  removeProjectIDs: [ID!]
+  addUserIDs: [ID!]
+  removeUserIDs: [ID!]
+}
+"""
 UpdateEpicInput is used for update Epic object.
 Input was generated by ent.
 """
 input UpdateEpicInput {
   name: String
+  description: String
   clearProject: Boolean
   projectID: ID
+  clearReporter: Boolean
+  reporterID: ID
+  clearAssignee: Boolean
+  assigneeID: ID
+  addCommentIDs: [ID!]
+  removeCommentIDs: [ID!]
 }
 """
 UpdateProjectInput is used for update Project object.
@@ -776,10 +1072,10 @@ input UpdateProjectInput {
   description: String
   addEpicIDs: [ID!]
   removeEpicIDs: [ID!]
-  clearReporter: Boolean
-  reporterID: ID
-  clearAssignee: Boolean
-  assigneeID: ID
+  clearOwner: Boolean
+  ownerID: ID
+  addCommentIDs: [ID!]
+  removeCommentIDs: [ID!]
 }
 """
 UpdateUserInput is used for update User object.
@@ -790,10 +1086,14 @@ input UpdateUserInput {
   surname: String
   username: String
   email: String
+  addOwnIDs: [ID!]
+  removeOwnIDs: [ID!]
   addReporterIDs: [ID!]
   removeReporterIDs: [ID!]
   addAssigneeIDs: [ID!]
   removeAssigneeIDs: [ID!]
+  addCommentIDs: [ID!]
+  removeCommentIDs: [ID!]
 }
 type User implements Node {
   id: ID!
@@ -801,8 +1101,10 @@ type User implements Node {
   surname: String!
   username: String!
   email: String!
-  reporter: [Project!]
-  assignee: [Project!]
+  owns: [Project!]
+  reporter: [Epic!]
+  assignee: [Epic!]
+  comments: [Comment!]
 }
 """A connection to a list of items."""
 type UserConnection {
@@ -893,12 +1195,18 @@ input UserWhereInput {
   emailHasSuffix: String
   emailEqualFold: String
   emailContainsFold: String
+  """owns edge predicates"""
+  hasOwns: Boolean
+  hasOwnsWith: [ProjectWhereInput!]
   """reporter edge predicates"""
   hasReporter: Boolean
-  hasReporterWith: [ProjectWhereInput!]
+  hasReporterWith: [EpicWhereInput!]
   """assignee edge predicates"""
   hasAssignee: Boolean
-  hasAssigneeWith: [ProjectWhereInput!]
+  hasAssigneeWith: [EpicWhereInput!]
+  """comments edge predicates"""
+  hasComments: Boolean
+  hasCommentsWith: [CommentWhereInput!]
 }
 `, BuiltIn: false},
 	{Name: "../scalars.graphql", Input: `scalar Time

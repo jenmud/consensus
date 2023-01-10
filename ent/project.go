@@ -22,26 +22,26 @@ type Project struct {
 	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProjectQuery when eager-loading is set.
-	Edges         ProjectEdges `json:"edges"`
-	user_reporter *int
-	user_assignee *int
+	Edges     ProjectEdges `json:"edges"`
+	user_owns *int
 }
 
 // ProjectEdges holds the relations/edges for other nodes in the graph.
 type ProjectEdges struct {
 	// Epics holds the value of the epics edge.
 	Epics []*Epic `json:"epics,omitempty"`
-	// Reporter holds the value of the reporter edge.
-	Reporter *User `json:"reporter,omitempty"`
-	// Assignee holds the value of the assignee edge.
-	Assignee *User `json:"assignee,omitempty"`
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
+	// Comments holds the value of the comments edge.
+	Comments []*Comment `json:"comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
 	// totalCount holds the count of the edges above.
 	totalCount [3]map[string]int
 
-	namedEpics map[string][]*Epic
+	namedEpics    map[string][]*Epic
+	namedComments map[string][]*Comment
 }
 
 // EpicsOrErr returns the Epics value or an error if the edge
@@ -53,30 +53,26 @@ func (e ProjectEdges) EpicsOrErr() ([]*Epic, error) {
 	return nil, &NotLoadedError{edge: "epics"}
 }
 
-// ReporterOrErr returns the Reporter value or an error if the edge
+// OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ProjectEdges) ReporterOrErr() (*User, error) {
+func (e ProjectEdges) OwnerOrErr() (*User, error) {
 	if e.loadedTypes[1] {
-		if e.Reporter == nil {
+		if e.Owner == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
-		return e.Reporter, nil
+		return e.Owner, nil
 	}
-	return nil, &NotLoadedError{edge: "reporter"}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
-// AssigneeOrErr returns the Assignee value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e ProjectEdges) AssigneeOrErr() (*User, error) {
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) CommentsOrErr() ([]*Comment, error) {
 	if e.loadedTypes[2] {
-		if e.Assignee == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: user.Label}
-		}
-		return e.Assignee, nil
+		return e.Comments, nil
 	}
-	return nil, &NotLoadedError{edge: "assignee"}
+	return nil, &NotLoadedError{edge: "comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -88,9 +84,7 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case project.FieldName, project.FieldDescription:
 			values[i] = new(sql.NullString)
-		case project.ForeignKeys[0]: // user_reporter
-			values[i] = new(sql.NullInt64)
-		case project.ForeignKeys[1]: // user_assignee
+		case project.ForeignKeys[0]: // user_owns
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Project", columns[i])
@@ -127,17 +121,10 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			}
 		case project.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_reporter", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_owns", value)
 			} else if value.Valid {
-				pr.user_reporter = new(int)
-				*pr.user_reporter = int(value.Int64)
-			}
-		case project.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_assignee", value)
-			} else if value.Valid {
-				pr.user_assignee = new(int)
-				*pr.user_assignee = int(value.Int64)
+				pr.user_owns = new(int)
+				*pr.user_owns = int(value.Int64)
 			}
 		}
 	}
@@ -149,14 +136,14 @@ func (pr *Project) QueryEpics() *EpicQuery {
 	return (&ProjectClient{config: pr.config}).QueryEpics(pr)
 }
 
-// QueryReporter queries the "reporter" edge of the Project entity.
-func (pr *Project) QueryReporter() *UserQuery {
-	return (&ProjectClient{config: pr.config}).QueryReporter(pr)
+// QueryOwner queries the "owner" edge of the Project entity.
+func (pr *Project) QueryOwner() *UserQuery {
+	return (&ProjectClient{config: pr.config}).QueryOwner(pr)
 }
 
-// QueryAssignee queries the "assignee" edge of the Project entity.
-func (pr *Project) QueryAssignee() *UserQuery {
-	return (&ProjectClient{config: pr.config}).QueryAssignee(pr)
+// QueryComments queries the "comments" edge of the Project entity.
+func (pr *Project) QueryComments() *CommentQuery {
+	return (&ProjectClient{config: pr.config}).QueryComments(pr)
 }
 
 // Update returns a builder for updating this Project.
@@ -212,6 +199,30 @@ func (pr *Project) appendNamedEpics(name string, edges ...*Epic) {
 		pr.Edges.namedEpics[name] = []*Epic{}
 	} else {
 		pr.Edges.namedEpics[name] = append(pr.Edges.namedEpics[name], edges...)
+	}
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (pr *Project) NamedComments(name string) ([]*Comment, error) {
+	if pr.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := pr.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (pr *Project) appendNamedComments(name string, edges ...*Comment) {
+	if pr.Edges.namedComments == nil {
+		pr.Edges.namedComments = make(map[string][]*Comment)
+	}
+	if len(edges) == 0 {
+		pr.Edges.namedComments[name] = []*Comment{}
+	} else {
+		pr.Edges.namedComments[name] = append(pr.Edges.namedComments[name], edges...)
 	}
 }
 

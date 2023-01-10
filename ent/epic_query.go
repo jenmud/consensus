@@ -4,31 +4,38 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
+	"github.com/jenmud/consensus/ent/user"
 )
 
 // EpicQuery is the builder for querying Epic entities.
 type EpicQuery struct {
 	config
-	limit       *int
-	offset      *int
-	unique      *bool
-	order       []OrderFunc
-	fields      []string
-	inters      []Interceptor
-	predicates  []predicate.Epic
-	withProject *ProjectQuery
-	withFKs     bool
-	modifiers   []func(*sql.Selector)
-	loadTotal   []func(context.Context, []*Epic) error
+	limit             *int
+	offset            *int
+	unique            *bool
+	order             []OrderFunc
+	fields            []string
+	inters            []Interceptor
+	predicates        []predicate.Epic
+	withProject       *ProjectQuery
+	withReporter      *UserQuery
+	withAssignee      *UserQuery
+	withComments      *CommentQuery
+	withFKs           bool
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*Epic) error
+	withNamedComments map[string]*CommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -80,6 +87,72 @@ func (eq *EpicQuery) QueryProject() *ProjectQuery {
 			sqlgraph.From(epic.Table, epic.FieldID, selector),
 			sqlgraph.To(project.Table, project.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, epic.ProjectTable, epic.ProjectColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReporter chains the current query on the "reporter" edge.
+func (eq *EpicQuery) QueryReporter() *UserQuery {
+	query := (&UserClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(epic.Table, epic.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, epic.ReporterTable, epic.ReporterColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAssignee chains the current query on the "assignee" edge.
+func (eq *EpicQuery) QueryAssignee() *UserQuery {
+	query := (&UserClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(epic.Table, epic.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, epic.AssigneeTable, epic.AssigneeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryComments chains the current query on the "comments" edge.
+func (eq *EpicQuery) QueryComments() *CommentQuery {
+	query := (&CommentClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(epic.Table, epic.FieldID, selector),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, epic.CommentsTable, epic.CommentsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
 		return fromU, nil
@@ -272,13 +345,16 @@ func (eq *EpicQuery) Clone() *EpicQuery {
 		return nil
 	}
 	return &EpicQuery{
-		config:      eq.config,
-		limit:       eq.limit,
-		offset:      eq.offset,
-		order:       append([]OrderFunc{}, eq.order...),
-		inters:      append([]Interceptor{}, eq.inters...),
-		predicates:  append([]predicate.Epic{}, eq.predicates...),
-		withProject: eq.withProject.Clone(),
+		config:       eq.config,
+		limit:        eq.limit,
+		offset:       eq.offset,
+		order:        append([]OrderFunc{}, eq.order...),
+		inters:       append([]Interceptor{}, eq.inters...),
+		predicates:   append([]predicate.Epic{}, eq.predicates...),
+		withProject:  eq.withProject.Clone(),
+		withReporter: eq.withReporter.Clone(),
+		withAssignee: eq.withAssignee.Clone(),
+		withComments: eq.withComments.Clone(),
 		// clone intermediate query.
 		sql:    eq.sql.Clone(),
 		path:   eq.path,
@@ -294,6 +370,39 @@ func (eq *EpicQuery) WithProject(opts ...func(*ProjectQuery)) *EpicQuery {
 		opt(query)
 	}
 	eq.withProject = query
+	return eq
+}
+
+// WithReporter tells the query-builder to eager-load the nodes that are connected to
+// the "reporter" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EpicQuery) WithReporter(opts ...func(*UserQuery)) *EpicQuery {
+	query := (&UserClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withReporter = query
+	return eq
+}
+
+// WithAssignee tells the query-builder to eager-load the nodes that are connected to
+// the "assignee" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EpicQuery) WithAssignee(opts ...func(*UserQuery)) *EpicQuery {
+	query := (&UserClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withAssignee = query
+	return eq
+}
+
+// WithComments tells the query-builder to eager-load the nodes that are connected to
+// the "comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EpicQuery) WithComments(opts ...func(*CommentQuery)) *EpicQuery {
+	query := (&CommentClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withComments = query
 	return eq
 }
 
@@ -376,11 +485,14 @@ func (eq *EpicQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Epic, e
 		nodes       = []*Epic{}
 		withFKs     = eq.withFKs
 		_spec       = eq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [4]bool{
 			eq.withProject != nil,
+			eq.withReporter != nil,
+			eq.withAssignee != nil,
+			eq.withComments != nil,
 		}
 	)
-	if eq.withProject != nil {
+	if eq.withProject != nil || eq.withReporter != nil || eq.withAssignee != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -410,6 +522,32 @@ func (eq *EpicQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Epic, e
 	if query := eq.withProject; query != nil {
 		if err := eq.loadProject(ctx, query, nodes, nil,
 			func(n *Epic, e *Project) { n.Edges.Project = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withReporter; query != nil {
+		if err := eq.loadReporter(ctx, query, nodes, nil,
+			func(n *Epic, e *User) { n.Edges.Reporter = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withAssignee; query != nil {
+		if err := eq.loadAssignee(ctx, query, nodes, nil,
+			func(n *Epic, e *User) { n.Edges.Assignee = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withComments; query != nil {
+		if err := eq.loadComments(ctx, query, nodes,
+			func(n *Epic) { n.Edges.Comments = []*Comment{} },
+			func(n *Epic, e *Comment) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range eq.withNamedComments {
+		if err := eq.loadComments(ctx, query, nodes,
+			func(n *Epic) { n.appendNamedComments(name) },
+			func(n *Epic, e *Comment) { n.appendNamedComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -446,6 +584,122 @@ func (eq *EpicQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (eq *EpicQuery) loadReporter(ctx context.Context, query *UserQuery, nodes []*Epic, init func(*Epic), assign func(*Epic, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Epic)
+	for i := range nodes {
+		if nodes[i].user_reporter == nil {
+			continue
+		}
+		fk := *nodes[i].user_reporter
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_reporter" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (eq *EpicQuery) loadAssignee(ctx context.Context, query *UserQuery, nodes []*Epic, init func(*Epic), assign func(*Epic, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Epic)
+	for i := range nodes {
+		if nodes[i].user_assignee == nil {
+			continue
+		}
+		fk := *nodes[i].user_assignee
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_assignee" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (eq *EpicQuery) loadComments(ctx context.Context, query *CommentQuery, nodes []*Epic, init func(*Epic), assign func(*Epic, *Comment)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Epic)
+	nids := make(map[int]map[*Epic]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(epic.CommentsTable)
+		s.Join(joinT).On(s.C(comment.FieldID), joinT.C(epic.CommentsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(epic.CommentsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(epic.CommentsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullInt64)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := int(values[0].(*sql.NullInt64).Int64)
+			inValue := int(values[1].(*sql.NullInt64).Int64)
+			if nids[inValue] == nil {
+				nids[inValue] = map[*Epic]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "comments" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
 		}
 	}
 	return nil
@@ -541,6 +795,20 @@ func (eq *EpicQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedComments tells the query-builder to eager-load the nodes that are connected to the "comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (eq *EpicQuery) WithNamedComments(name string, opts ...func(*CommentQuery)) *EpicQuery {
+	query := (&CommentClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if eq.withNamedComments == nil {
+		eq.withNamedComments = make(map[string]*CommentQuery)
+	}
+	eq.withNamedComments[name] = query
+	return eq
 }
 
 // EpicGroupBy is the group-by builder for Epic entities.

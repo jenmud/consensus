@@ -2,17 +2,107 @@
 
 package ent
 
+// CreateCommentInput represents a mutation input for creating comments.
+type CreateCommentInput struct {
+	Text       string
+	EpicIDs    []int
+	ProjectIDs []int
+	UserIDs    []int
+}
+
+// Mutate applies the CreateCommentInput on the CommentMutation builder.
+func (i *CreateCommentInput) Mutate(m *CommentMutation) {
+	m.SetText(i.Text)
+	if v := i.EpicIDs; len(v) > 0 {
+		m.AddEpicIDs(v...)
+	}
+	if v := i.ProjectIDs; len(v) > 0 {
+		m.AddProjectIDs(v...)
+	}
+	if v := i.UserIDs; len(v) > 0 {
+		m.AddUserIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the CreateCommentInput on the CommentCreate builder.
+func (c *CommentCreate) SetInput(i CreateCommentInput) *CommentCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateCommentInput represents a mutation input for updating comments.
+type UpdateCommentInput struct {
+	Text             *string
+	AddEpicIDs       []int
+	RemoveEpicIDs    []int
+	AddProjectIDs    []int
+	RemoveProjectIDs []int
+	AddUserIDs       []int
+	RemoveUserIDs    []int
+}
+
+// Mutate applies the UpdateCommentInput on the CommentMutation builder.
+func (i *UpdateCommentInput) Mutate(m *CommentMutation) {
+	if v := i.Text; v != nil {
+		m.SetText(*v)
+	}
+	if v := i.AddEpicIDs; len(v) > 0 {
+		m.AddEpicIDs(v...)
+	}
+	if v := i.RemoveEpicIDs; len(v) > 0 {
+		m.RemoveEpicIDs(v...)
+	}
+	if v := i.AddProjectIDs; len(v) > 0 {
+		m.AddProjectIDs(v...)
+	}
+	if v := i.RemoveProjectIDs; len(v) > 0 {
+		m.RemoveProjectIDs(v...)
+	}
+	if v := i.AddUserIDs; len(v) > 0 {
+		m.AddUserIDs(v...)
+	}
+	if v := i.RemoveUserIDs; len(v) > 0 {
+		m.RemoveUserIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateCommentInput on the CommentUpdate builder.
+func (c *CommentUpdate) SetInput(i UpdateCommentInput) *CommentUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateCommentInput on the CommentUpdateOne builder.
+func (c *CommentUpdateOne) SetInput(i UpdateCommentInput) *CommentUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateEpicInput represents a mutation input for creating epics.
 type CreateEpicInput struct {
-	Name      string
-	ProjectID *int
+	Name        string
+	Description string
+	ProjectID   *int
+	ReporterID  *int
+	AssigneeID  *int
+	CommentIDs  []int
 }
 
 // Mutate applies the CreateEpicInput on the EpicMutation builder.
 func (i *CreateEpicInput) Mutate(m *EpicMutation) {
 	m.SetName(i.Name)
+	m.SetDescription(i.Description)
 	if v := i.ProjectID; v != nil {
 		m.SetProjectID(*v)
+	}
+	if v := i.ReporterID; v != nil {
+		m.SetReporterID(*v)
+	}
+	if v := i.AssigneeID; v != nil {
+		m.SetAssigneeID(*v)
+	}
+	if v := i.CommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
 	}
 }
 
@@ -24,9 +114,16 @@ func (c *EpicCreate) SetInput(i CreateEpicInput) *EpicCreate {
 
 // UpdateEpicInput represents a mutation input for updating epics.
 type UpdateEpicInput struct {
-	Name         *string
-	ClearProject bool
-	ProjectID    *int
+	Name             *string
+	Description      *string
+	ClearProject     bool
+	ProjectID        *int
+	ClearReporter    bool
+	ReporterID       *int
+	ClearAssignee    bool
+	AssigneeID       *int
+	AddCommentIDs    []int
+	RemoveCommentIDs []int
 }
 
 // Mutate applies the UpdateEpicInput on the EpicMutation builder.
@@ -34,11 +131,32 @@ func (i *UpdateEpicInput) Mutate(m *EpicMutation) {
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
+	if v := i.Description; v != nil {
+		m.SetDescription(*v)
+	}
 	if i.ClearProject {
 		m.ClearProject()
 	}
 	if v := i.ProjectID; v != nil {
 		m.SetProjectID(*v)
+	}
+	if i.ClearReporter {
+		m.ClearReporter()
+	}
+	if v := i.ReporterID; v != nil {
+		m.SetReporterID(*v)
+	}
+	if i.ClearAssignee {
+		m.ClearAssignee()
+	}
+	if v := i.AssigneeID; v != nil {
+		m.SetAssigneeID(*v)
+	}
+	if v := i.AddCommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
+	}
+	if v := i.RemoveCommentIDs; len(v) > 0 {
+		m.RemoveCommentIDs(v...)
 	}
 }
 
@@ -59,8 +177,8 @@ type CreateProjectInput struct {
 	Name        string
 	Description *string
 	EpicIDs     []int
-	ReporterID  *int
-	AssigneeID  *int
+	OwnerID     *int
+	CommentIDs  []int
 }
 
 // Mutate applies the CreateProjectInput on the ProjectMutation builder.
@@ -72,11 +190,11 @@ func (i *CreateProjectInput) Mutate(m *ProjectMutation) {
 	if v := i.EpicIDs; len(v) > 0 {
 		m.AddEpicIDs(v...)
 	}
-	if v := i.ReporterID; v != nil {
-		m.SetReporterID(*v)
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
 	}
-	if v := i.AssigneeID; v != nil {
-		m.SetAssigneeID(*v)
+	if v := i.CommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
 	}
 }
 
@@ -93,10 +211,10 @@ type UpdateProjectInput struct {
 	Description      *string
 	AddEpicIDs       []int
 	RemoveEpicIDs    []int
-	ClearReporter    bool
-	ReporterID       *int
-	ClearAssignee    bool
-	AssigneeID       *int
+	ClearOwner       bool
+	OwnerID          *int
+	AddCommentIDs    []int
+	RemoveCommentIDs []int
 }
 
 // Mutate applies the UpdateProjectInput on the ProjectMutation builder.
@@ -116,17 +234,17 @@ func (i *UpdateProjectInput) Mutate(m *ProjectMutation) {
 	if v := i.RemoveEpicIDs; len(v) > 0 {
 		m.RemoveEpicIDs(v...)
 	}
-	if i.ClearReporter {
-		m.ClearReporter()
+	if i.ClearOwner {
+		m.ClearOwner()
 	}
-	if v := i.ReporterID; v != nil {
-		m.SetReporterID(*v)
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
 	}
-	if i.ClearAssignee {
-		m.ClearAssignee()
+	if v := i.AddCommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
 	}
-	if v := i.AssigneeID; v != nil {
-		m.SetAssigneeID(*v)
+	if v := i.RemoveCommentIDs; len(v) > 0 {
+		m.RemoveCommentIDs(v...)
 	}
 }
 
@@ -148,8 +266,10 @@ type CreateUserInput struct {
 	Surname     string
 	Username    string
 	Email       string
+	OwnIDs      []int
 	ReporterIDs []int
 	AssigneeIDs []int
+	CommentIDs  []int
 }
 
 // Mutate applies the CreateUserInput on the UserMutation builder.
@@ -158,11 +278,17 @@ func (i *CreateUserInput) Mutate(m *UserMutation) {
 	m.SetSurname(i.Surname)
 	m.SetUsername(i.Username)
 	m.SetEmail(i.Email)
+	if v := i.OwnIDs; len(v) > 0 {
+		m.AddOwnIDs(v...)
+	}
 	if v := i.ReporterIDs; len(v) > 0 {
 		m.AddReporterIDs(v...)
 	}
 	if v := i.AssigneeIDs; len(v) > 0 {
 		m.AddAssigneeIDs(v...)
+	}
+	if v := i.CommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
 	}
 }
 
@@ -178,10 +304,14 @@ type UpdateUserInput struct {
 	Surname           *string
 	Username          *string
 	Email             *string
+	AddOwnIDs         []int
+	RemoveOwnIDs      []int
 	AddReporterIDs    []int
 	RemoveReporterIDs []int
 	AddAssigneeIDs    []int
 	RemoveAssigneeIDs []int
+	AddCommentIDs     []int
+	RemoveCommentIDs  []int
 }
 
 // Mutate applies the UpdateUserInput on the UserMutation builder.
@@ -198,6 +328,12 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	if v := i.Email; v != nil {
 		m.SetEmail(*v)
 	}
+	if v := i.AddOwnIDs; len(v) > 0 {
+		m.AddOwnIDs(v...)
+	}
+	if v := i.RemoveOwnIDs; len(v) > 0 {
+		m.RemoveOwnIDs(v...)
+	}
 	if v := i.AddReporterIDs; len(v) > 0 {
 		m.AddReporterIDs(v...)
 	}
@@ -209,6 +345,12 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.RemoveAssigneeIDs; len(v) > 0 {
 		m.RemoveAssigneeIDs(v...)
+	}
+	if v := i.AddCommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
+	}
+	if v := i.RemoveCommentIDs; len(v) > 0 {
+		m.RemoveCommentIDs(v...)
 	}
 }
 

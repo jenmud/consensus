@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
@@ -70,42 +71,38 @@ func (pu *ProjectUpdate) AddEpics(e ...*Epic) *ProjectUpdate {
 	return pu.AddEpicIDs(ids...)
 }
 
-// SetReporterID sets the "reporter" edge to the User entity by ID.
-func (pu *ProjectUpdate) SetReporterID(id int) *ProjectUpdate {
-	pu.mutation.SetReporterID(id)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (pu *ProjectUpdate) SetOwnerID(id int) *ProjectUpdate {
+	pu.mutation.SetOwnerID(id)
 	return pu
 }
 
-// SetNillableReporterID sets the "reporter" edge to the User entity by ID if the given value is not nil.
-func (pu *ProjectUpdate) SetNillableReporterID(id *int) *ProjectUpdate {
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableOwnerID(id *int) *ProjectUpdate {
 	if id != nil {
-		pu = pu.SetReporterID(*id)
+		pu = pu.SetOwnerID(*id)
 	}
 	return pu
 }
 
-// SetReporter sets the "reporter" edge to the User entity.
-func (pu *ProjectUpdate) SetReporter(u *User) *ProjectUpdate {
-	return pu.SetReporterID(u.ID)
+// SetOwner sets the "owner" edge to the User entity.
+func (pu *ProjectUpdate) SetOwner(u *User) *ProjectUpdate {
+	return pu.SetOwnerID(u.ID)
 }
 
-// SetAssigneeID sets the "assignee" edge to the User entity by ID.
-func (pu *ProjectUpdate) SetAssigneeID(id int) *ProjectUpdate {
-	pu.mutation.SetAssigneeID(id)
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (pu *ProjectUpdate) AddCommentIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.AddCommentIDs(ids...)
 	return pu
 }
 
-// SetNillableAssigneeID sets the "assignee" edge to the User entity by ID if the given value is not nil.
-func (pu *ProjectUpdate) SetNillableAssigneeID(id *int) *ProjectUpdate {
-	if id != nil {
-		pu = pu.SetAssigneeID(*id)
+// AddComments adds the "comments" edges to the Comment entity.
+func (pu *ProjectUpdate) AddComments(c ...*Comment) *ProjectUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
 	}
-	return pu
-}
-
-// SetAssignee sets the "assignee" edge to the User entity.
-func (pu *ProjectUpdate) SetAssignee(u *User) *ProjectUpdate {
-	return pu.SetAssigneeID(u.ID)
+	return pu.AddCommentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -134,16 +131,31 @@ func (pu *ProjectUpdate) RemoveEpics(e ...*Epic) *ProjectUpdate {
 	return pu.RemoveEpicIDs(ids...)
 }
 
-// ClearReporter clears the "reporter" edge to the User entity.
-func (pu *ProjectUpdate) ClearReporter() *ProjectUpdate {
-	pu.mutation.ClearReporter()
+// ClearOwner clears the "owner" edge to the User entity.
+func (pu *ProjectUpdate) ClearOwner() *ProjectUpdate {
+	pu.mutation.ClearOwner()
 	return pu
 }
 
-// ClearAssignee clears the "assignee" edge to the User entity.
-func (pu *ProjectUpdate) ClearAssignee() *ProjectUpdate {
-	pu.mutation.ClearAssignee()
+// ClearComments clears all "comments" edges to the Comment entity.
+func (pu *ProjectUpdate) ClearComments() *ProjectUpdate {
+	pu.mutation.ClearComments()
 	return pu
+}
+
+// RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
+func (pu *ProjectUpdate) RemoveCommentIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.RemoveCommentIDs(ids...)
+	return pu
+}
+
+// RemoveComments removes "comments" edges to Comment entities.
+func (pu *ProjectUpdate) RemoveComments(c ...*Comment) *ProjectUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return pu.RemoveCommentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -267,12 +279,12 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if pu.mutation.ReporterCleared() {
+	if pu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   project.ReporterTable,
-			Columns: []string{project.ReporterColumn},
+			Table:   project.OwnerTable,
+			Columns: []string{project.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -283,12 +295,12 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.ReporterIDs(); len(nodes) > 0 {
+	if nodes := pu.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   project.ReporterTable,
-			Columns: []string{project.ReporterColumn},
+			Table:   project.OwnerTable,
+			Columns: []string{project.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -302,33 +314,52 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if pu.mutation.AssigneeCleared() {
+	if pu.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   project.AssigneeTable,
-			Columns: []string{project.AssigneeColumn},
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: user.FieldID,
+					Column: comment.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.AssigneeIDs(); len(nodes) > 0 {
+	if nodes := pu.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !pu.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   project.AssigneeTable,
-			Columns: []string{project.AssigneeColumn},
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: user.FieldID,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}
@@ -398,42 +429,38 @@ func (puo *ProjectUpdateOne) AddEpics(e ...*Epic) *ProjectUpdateOne {
 	return puo.AddEpicIDs(ids...)
 }
 
-// SetReporterID sets the "reporter" edge to the User entity by ID.
-func (puo *ProjectUpdateOne) SetReporterID(id int) *ProjectUpdateOne {
-	puo.mutation.SetReporterID(id)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (puo *ProjectUpdateOne) SetOwnerID(id int) *ProjectUpdateOne {
+	puo.mutation.SetOwnerID(id)
 	return puo
 }
 
-// SetNillableReporterID sets the "reporter" edge to the User entity by ID if the given value is not nil.
-func (puo *ProjectUpdateOne) SetNillableReporterID(id *int) *ProjectUpdateOne {
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableOwnerID(id *int) *ProjectUpdateOne {
 	if id != nil {
-		puo = puo.SetReporterID(*id)
+		puo = puo.SetOwnerID(*id)
 	}
 	return puo
 }
 
-// SetReporter sets the "reporter" edge to the User entity.
-func (puo *ProjectUpdateOne) SetReporter(u *User) *ProjectUpdateOne {
-	return puo.SetReporterID(u.ID)
+// SetOwner sets the "owner" edge to the User entity.
+func (puo *ProjectUpdateOne) SetOwner(u *User) *ProjectUpdateOne {
+	return puo.SetOwnerID(u.ID)
 }
 
-// SetAssigneeID sets the "assignee" edge to the User entity by ID.
-func (puo *ProjectUpdateOne) SetAssigneeID(id int) *ProjectUpdateOne {
-	puo.mutation.SetAssigneeID(id)
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (puo *ProjectUpdateOne) AddCommentIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.AddCommentIDs(ids...)
 	return puo
 }
 
-// SetNillableAssigneeID sets the "assignee" edge to the User entity by ID if the given value is not nil.
-func (puo *ProjectUpdateOne) SetNillableAssigneeID(id *int) *ProjectUpdateOne {
-	if id != nil {
-		puo = puo.SetAssigneeID(*id)
+// AddComments adds the "comments" edges to the Comment entity.
+func (puo *ProjectUpdateOne) AddComments(c ...*Comment) *ProjectUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
 	}
-	return puo
-}
-
-// SetAssignee sets the "assignee" edge to the User entity.
-func (puo *ProjectUpdateOne) SetAssignee(u *User) *ProjectUpdateOne {
-	return puo.SetAssigneeID(u.ID)
+	return puo.AddCommentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -462,16 +489,31 @@ func (puo *ProjectUpdateOne) RemoveEpics(e ...*Epic) *ProjectUpdateOne {
 	return puo.RemoveEpicIDs(ids...)
 }
 
-// ClearReporter clears the "reporter" edge to the User entity.
-func (puo *ProjectUpdateOne) ClearReporter() *ProjectUpdateOne {
-	puo.mutation.ClearReporter()
+// ClearOwner clears the "owner" edge to the User entity.
+func (puo *ProjectUpdateOne) ClearOwner() *ProjectUpdateOne {
+	puo.mutation.ClearOwner()
 	return puo
 }
 
-// ClearAssignee clears the "assignee" edge to the User entity.
-func (puo *ProjectUpdateOne) ClearAssignee() *ProjectUpdateOne {
-	puo.mutation.ClearAssignee()
+// ClearComments clears all "comments" edges to the Comment entity.
+func (puo *ProjectUpdateOne) ClearComments() *ProjectUpdateOne {
+	puo.mutation.ClearComments()
 	return puo
+}
+
+// RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
+func (puo *ProjectUpdateOne) RemoveCommentIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.RemoveCommentIDs(ids...)
+	return puo
+}
+
+// RemoveComments removes "comments" edges to Comment entities.
+func (puo *ProjectUpdateOne) RemoveComments(c ...*Comment) *ProjectUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return puo.RemoveCommentIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -619,12 +661,12 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if puo.mutation.ReporterCleared() {
+	if puo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   project.ReporterTable,
-			Columns: []string{project.ReporterColumn},
+			Table:   project.OwnerTable,
+			Columns: []string{project.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -635,12 +677,12 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.ReporterIDs(); len(nodes) > 0 {
+	if nodes := puo.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   project.ReporterTable,
-			Columns: []string{project.ReporterColumn},
+			Table:   project.OwnerTable,
+			Columns: []string{project.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -654,33 +696,52 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if puo.mutation.AssigneeCleared() {
+	if puo.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   project.AssigneeTable,
-			Columns: []string{project.AssigneeColumn},
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: user.FieldID,
+					Column: comment.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.AssigneeIDs(); len(nodes) > 0 {
+	if nodes := puo.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !puo.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   project.AssigneeTable,
-			Columns: []string{project.AssigneeColumn},
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: user.FieldID,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}

@@ -10,6 +10,92 @@ import (
 )
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (c *CommentQuery) CollectFields(ctx context.Context, satisfies ...string) (*CommentQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return c, nil
+	}
+	if err := c.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *CommentQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "epics":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &EpicQuery{config: c.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedEpics(alias, func(wq *EpicQuery) {
+				*wq = *query
+			})
+		case "projects":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &ProjectQuery{config: c.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedProjects(alias, func(wq *ProjectQuery) {
+				*wq = *query
+			})
+		case "users":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &UserQuery{config: c.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedUsers(alias, func(wq *UserQuery) {
+				*wq = *query
+			})
+		}
+	}
+	return nil
+}
+
+type commentPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []CommentPaginateOption
+}
+
+func newCommentPaginateArgs(rv map[string]interface{}) *commentPaginateArgs {
+	args := &commentPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*CommentWhereInput); ok {
+		args.opts = append(args.opts, WithCommentFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (e *EpicQuery) CollectFields(ctx context.Context, satisfies ...string) (*EpicQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
@@ -35,6 +121,38 @@ func (e *EpicQuery) collectField(ctx context.Context, op *graphql.OperationConte
 				return err
 			}
 			e.withProject = query
+		case "reporter":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &UserQuery{config: e.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			e.withReporter = query
+		case "assignee":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &UserQuery{config: e.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			e.withAssignee = query
+		case "comments":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &CommentQuery{config: e.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			e.WithNamedComments(alias, func(wq *CommentQuery) {
+				*wq = *query
+			})
 		}
 	}
 	return nil
@@ -97,7 +215,7 @@ func (pr *ProjectQuery) collectField(ctx context.Context, op *graphql.OperationC
 			pr.WithNamedEpics(alias, func(wq *EpicQuery) {
 				*wq = *query
 			})
-		case "reporter":
+		case "owner":
 			var (
 				alias = field.Alias
 				path  = append(path, alias)
@@ -106,17 +224,19 @@ func (pr *ProjectQuery) collectField(ctx context.Context, op *graphql.OperationC
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			pr.withReporter = query
-		case "assignee":
+			pr.withOwner = query
+		case "comments":
 			var (
 				alias = field.Alias
 				path  = append(path, alias)
-				query = &UserQuery{config: pr.config}
+				query = &CommentQuery{config: pr.config}
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			pr.withAssignee = query
+			pr.WithNamedComments(alias, func(wq *CommentQuery) {
+				*wq = *query
+			})
 		}
 	}
 	return nil
@@ -167,7 +287,7 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 	path = append([]string(nil), path...)
 	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
 		switch field.Name {
-		case "reporter":
+		case "owns":
 			var (
 				alias = field.Alias
 				path  = append(path, alias)
@@ -176,19 +296,43 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.WithNamedReporter(alias, func(wq *ProjectQuery) {
+			u.WithNamedOwns(alias, func(wq *ProjectQuery) {
+				*wq = *query
+			})
+		case "reporter":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &EpicQuery{config: u.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			u.WithNamedReporter(alias, func(wq *EpicQuery) {
 				*wq = *query
 			})
 		case "assignee":
 			var (
 				alias = field.Alias
 				path  = append(path, alias)
-				query = &ProjectQuery{config: u.config}
+				query = &EpicQuery{config: u.config}
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.WithNamedAssignee(alias, func(wq *ProjectQuery) {
+			u.WithNamedAssignee(alias, func(wq *EpicQuery) {
+				*wq = *query
+			})
+		case "comments":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &CommentQuery{config: u.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			u.WithNamedComments(alias, func(wq *CommentQuery) {
 				*wq = *query
 			})
 		}

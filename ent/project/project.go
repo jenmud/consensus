@@ -13,10 +13,10 @@ const (
 	FieldDescription = "description"
 	// EdgeEpics holds the string denoting the epics edge name in mutations.
 	EdgeEpics = "epics"
-	// EdgeReporter holds the string denoting the reporter edge name in mutations.
-	EdgeReporter = "reporter"
-	// EdgeAssignee holds the string denoting the assignee edge name in mutations.
-	EdgeAssignee = "assignee"
+	// EdgeOwner holds the string denoting the owner edge name in mutations.
+	EdgeOwner = "owner"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "comments"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
 	// EpicsTable is the table that holds the epics relation/edge.
@@ -26,20 +26,18 @@ const (
 	EpicsInverseTable = "epics"
 	// EpicsColumn is the table column denoting the epics relation/edge.
 	EpicsColumn = "epic_project"
-	// ReporterTable is the table that holds the reporter relation/edge.
-	ReporterTable = "projects"
-	// ReporterInverseTable is the table name for the User entity.
+	// OwnerTable is the table that holds the owner relation/edge.
+	OwnerTable = "projects"
+	// OwnerInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
-	ReporterInverseTable = "users"
-	// ReporterColumn is the table column denoting the reporter relation/edge.
-	ReporterColumn = "user_reporter"
-	// AssigneeTable is the table that holds the assignee relation/edge.
-	AssigneeTable = "projects"
-	// AssigneeInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	AssigneeInverseTable = "users"
-	// AssigneeColumn is the table column denoting the assignee relation/edge.
-	AssigneeColumn = "user_assignee"
+	OwnerInverseTable = "users"
+	// OwnerColumn is the table column denoting the owner relation/edge.
+	OwnerColumn = "user_owns"
+	// CommentsTable is the table that holds the comments relation/edge. The primary key declared below.
+	CommentsTable = "project_comments"
+	// CommentsInverseTable is the table name for the Comment entity.
+	// It exists in this package in order to avoid circular dependency with the "comment" package.
+	CommentsInverseTable = "comments"
 )
 
 // Columns holds all SQL columns for project fields.
@@ -52,9 +50,14 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "projects"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"user_reporter",
-	"user_assignee",
+	"user_owns",
 }
+
+var (
+	// CommentsPrimaryKey and CommentsColumn2 are the table columns denoting the
+	// primary key for the comments relation (M2M).
+	CommentsPrimaryKey = []string{"project_id", "comment_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

@@ -42,7 +42,9 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("reporter", Project.Type),
-		edge.To("assignee", Project.Type),
+		edge.To("owns", Project.Type),
+		edge.To("reporter", Epic.Type),
+		edge.To("assignee", Epic.Type),
+		edge.To("comments", Comment.Type),
 	}
 }

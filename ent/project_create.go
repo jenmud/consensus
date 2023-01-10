@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
@@ -56,42 +57,38 @@ func (pc *ProjectCreate) AddEpics(e ...*Epic) *ProjectCreate {
 	return pc.AddEpicIDs(ids...)
 }
 
-// SetReporterID sets the "reporter" edge to the User entity by ID.
-func (pc *ProjectCreate) SetReporterID(id int) *ProjectCreate {
-	pc.mutation.SetReporterID(id)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (pc *ProjectCreate) SetOwnerID(id int) *ProjectCreate {
+	pc.mutation.SetOwnerID(id)
 	return pc
 }
 
-// SetNillableReporterID sets the "reporter" edge to the User entity by ID if the given value is not nil.
-func (pc *ProjectCreate) SetNillableReporterID(id *int) *ProjectCreate {
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
+func (pc *ProjectCreate) SetNillableOwnerID(id *int) *ProjectCreate {
 	if id != nil {
-		pc = pc.SetReporterID(*id)
+		pc = pc.SetOwnerID(*id)
 	}
 	return pc
 }
 
-// SetReporter sets the "reporter" edge to the User entity.
-func (pc *ProjectCreate) SetReporter(u *User) *ProjectCreate {
-	return pc.SetReporterID(u.ID)
+// SetOwner sets the "owner" edge to the User entity.
+func (pc *ProjectCreate) SetOwner(u *User) *ProjectCreate {
+	return pc.SetOwnerID(u.ID)
 }
 
-// SetAssigneeID sets the "assignee" edge to the User entity by ID.
-func (pc *ProjectCreate) SetAssigneeID(id int) *ProjectCreate {
-	pc.mutation.SetAssigneeID(id)
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (pc *ProjectCreate) AddCommentIDs(ids ...int) *ProjectCreate {
+	pc.mutation.AddCommentIDs(ids...)
 	return pc
 }
 
-// SetNillableAssigneeID sets the "assignee" edge to the User entity by ID if the given value is not nil.
-func (pc *ProjectCreate) SetNillableAssigneeID(id *int) *ProjectCreate {
-	if id != nil {
-		pc = pc.SetAssigneeID(*id)
+// AddComments adds the "comments" edges to the Comment entity.
+func (pc *ProjectCreate) AddComments(c ...*Comment) *ProjectCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
 	}
-	return pc
-}
-
-// SetAssignee sets the "assignee" edge to the User entity.
-func (pc *ProjectCreate) SetAssignee(u *User) *ProjectCreate {
-	return pc.SetAssigneeID(u.ID)
+	return pc.AddCommentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -195,12 +192,12 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.ReporterIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   project.ReporterTable,
-			Columns: []string{project.ReporterColumn},
+			Table:   project.OwnerTable,
+			Columns: []string{project.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -212,27 +209,26 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_reporter = &nodes[0]
+		_node.user_owns = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.AssigneeIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   project.AssigneeTable,
-			Columns: []string{project.AssigneeColumn},
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.CommentsTable,
+			Columns: project.CommentsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: user.FieldID,
+					Column: comment.FieldID,
 				},
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_assignee = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

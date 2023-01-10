@@ -22,6 +22,11 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []int) ([]ent.Noder, erro
 	panic(fmt.Errorf("not implemented: Nodes - nodes"))
 }
 
+// Comments is the resolver for the comments field.
+func (r *queryResolver) Comments(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.CommentWhereInput) (*ent.CommentConnection, error) {
+	panic(fmt.Errorf("not implemented: Comments - comments"))
+}
+
 // Epics is the resolver for the epics field.
 func (r *queryResolver) Epics(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.EpicWhereInput) (*ent.EpicConnection, error) {
 	panic(fmt.Errorf("not implemented: Epics - epics"))

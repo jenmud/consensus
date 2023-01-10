@@ -33,3 +33,31 @@ func (TimeMixin) Fields() []ent.Field {
 			UpdateDefault(time.Now),
 	}
 }
+
+// TaskMixin implements the ent.Mixin for sharing task type fields with package schemas.
+type TaskMixin struct {
+	mixin.Schema
+}
+
+func (TaskMixin) Fields() []ent.Field {
+	return []ent.Field{
+		field.Time("deadline").
+			Annotations(
+				entgql.OrderField("DEADLINE"),
+			),
+
+		field.Enum("size").
+			NamedValues("small", "SMALL", "medium", "MEDIUM", "large", "LARGE").
+			Default("small").
+			Annotations(
+				entgql.OrderField("SIZE"),
+			),
+
+		field.Enum("status").
+			NamedValues("pending", "PENDING", "in_progress", "IN_PROGRESS", "done", "DONE").
+			Default("pending").
+			Annotations(
+				entgql.OrderField("STATUS"),
+			),
+	}
+}

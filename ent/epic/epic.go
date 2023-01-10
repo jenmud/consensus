@@ -9,8 +9,16 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
 	// EdgeProject holds the string denoting the project edge name in mutations.
 	EdgeProject = "project"
+	// EdgeReporter holds the string denoting the reporter edge name in mutations.
+	EdgeReporter = "reporter"
+	// EdgeAssignee holds the string denoting the assignee edge name in mutations.
+	EdgeAssignee = "assignee"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "comments"
 	// Table holds the table name of the epic in the database.
 	Table = "epics"
 	// ProjectTable is the table that holds the project relation/edge.
@@ -20,19 +28,47 @@ const (
 	ProjectInverseTable = "projects"
 	// ProjectColumn is the table column denoting the project relation/edge.
 	ProjectColumn = "epic_project"
+	// ReporterTable is the table that holds the reporter relation/edge.
+	ReporterTable = "epics"
+	// ReporterInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	ReporterInverseTable = "users"
+	// ReporterColumn is the table column denoting the reporter relation/edge.
+	ReporterColumn = "user_reporter"
+	// AssigneeTable is the table that holds the assignee relation/edge.
+	AssigneeTable = "epics"
+	// AssigneeInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	AssigneeInverseTable = "users"
+	// AssigneeColumn is the table column denoting the assignee relation/edge.
+	AssigneeColumn = "user_assignee"
+	// CommentsTable is the table that holds the comments relation/edge. The primary key declared below.
+	CommentsTable = "epic_comments"
+	// CommentsInverseTable is the table name for the Comment entity.
+	// It exists in this package in order to avoid circular dependency with the "comment" package.
+	CommentsInverseTable = "comments"
 )
 
 // Columns holds all SQL columns for epic fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldDescription,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "epics"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"epic_project",
+	"user_reporter",
+	"user_assignee",
 }
+
+var (
+	// CommentsPrimaryKey and CommentsColumn2 are the table columns denoting the
+	// primary key for the comments relation (M2M).
+	CommentsPrimaryKey = []string{"epic_id", "comment_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

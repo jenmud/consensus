@@ -15,6 +15,7 @@ import (
 	"entgo.io/ent/dialect/sql/schema"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/hashicorp/go-multierror"
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
@@ -48,12 +49,61 @@ type Edge struct {
 	IDs  []int  `json:"ids,omitempty"`  // node ids (where this edge point to).
 }
 
+func (c *Comment) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     c.ID,
+		Type:   "Comment",
+		Fields: make([]*Field, 1),
+		Edges:  make([]*Edge, 3),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(c.Text); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "text",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Epic",
+		Name: "epics",
+	}
+	err = c.QueryEpics().
+		Select(epic.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
+		Type: "Project",
+		Name: "projects",
+	}
+	err = c.QueryProjects().
+		Select(project.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[2] = &Edge{
+		Type: "User",
+		Name: "users",
+	}
+	err = c.QueryUsers().
+		Select(user.FieldID).
+		Scan(ctx, &node.Edges[2].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (e *Epic) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     e.ID,
 		Type:   "Epic",
-		Fields: make([]*Field, 1),
-		Edges:  make([]*Edge, 1),
+		Fields: make([]*Field, 2),
+		Edges:  make([]*Edge, 4),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(e.Name); err != nil {
@@ -64,6 +114,14 @@ func (e *Epic) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "name",
 		Value: string(buf),
 	}
+	if buf, err = json.Marshal(e.Description); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "string",
+		Name:  "description",
+		Value: string(buf),
+	}
 	node.Edges[0] = &Edge{
 		Type: "Project",
 		Name: "project",
@@ -71,6 +129,36 @@ func (e *Epic) Node(ctx context.Context) (node *Node, err error) {
 	err = e.QueryProject().
 		Select(project.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
+		Type: "User",
+		Name: "reporter",
+	}
+	err = e.QueryReporter().
+		Select(user.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[2] = &Edge{
+		Type: "User",
+		Name: "assignee",
+	}
+	err = e.QueryAssignee().
+		Select(user.FieldID).
+		Scan(ctx, &node.Edges[2].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[3] = &Edge{
+		Type: "Comment",
+		Name: "comments",
+	}
+	err = e.QueryComments().
+		Select(comment.FieldID).
+		Scan(ctx, &node.Edges[3].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -113,20 +201,20 @@ func (pr *Project) Node(ctx context.Context) (node *Node, err error) {
 	}
 	node.Edges[1] = &Edge{
 		Type: "User",
-		Name: "reporter",
+		Name: "owner",
 	}
-	err = pr.QueryReporter().
+	err = pr.QueryOwner().
 		Select(user.FieldID).
 		Scan(ctx, &node.Edges[1].IDs)
 	if err != nil {
 		return nil, err
 	}
 	node.Edges[2] = &Edge{
-		Type: "User",
-		Name: "assignee",
+		Type: "Comment",
+		Name: "comments",
 	}
-	err = pr.QueryAssignee().
-		Select(user.FieldID).
+	err = pr.QueryComments().
+		Select(comment.FieldID).
 		Scan(ctx, &node.Edges[2].IDs)
 	if err != nil {
 		return nil, err
@@ -139,7 +227,7 @@ func (u *User) Node(ctx context.Context) (node *Node, err error) {
 		ID:     u.ID,
 		Type:   "User",
 		Fields: make([]*Field, 4),
-		Edges:  make([]*Edge, 2),
+		Edges:  make([]*Edge, 4),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(u.Name); err != nil {
@@ -176,21 +264,41 @@ func (u *User) Node(ctx context.Context) (node *Node, err error) {
 	}
 	node.Edges[0] = &Edge{
 		Type: "Project",
-		Name: "reporter",
+		Name: "owns",
 	}
-	err = u.QueryReporter().
+	err = u.QueryOwns().
 		Select(project.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
 	if err != nil {
 		return nil, err
 	}
 	node.Edges[1] = &Edge{
-		Type: "Project",
+		Type: "Epic",
+		Name: "reporter",
+	}
+	err = u.QueryReporter().
+		Select(epic.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[2] = &Edge{
+		Type: "Epic",
 		Name: "assignee",
 	}
 	err = u.QueryAssignee().
-		Select(project.FieldID).
-		Scan(ctx, &node.Edges[1].IDs)
+		Select(epic.FieldID).
+		Scan(ctx, &node.Edges[2].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[3] = &Edge{
+		Type: "Comment",
+		Name: "comments",
+	}
+	err = u.QueryComments().
+		Select(comment.FieldID).
+		Scan(ctx, &node.Edges[3].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -263,6 +371,18 @@ func (c *Client) Noder(ctx context.Context, id int, opts ...NodeOption) (_ Noder
 
 func (c *Client) noder(ctx context.Context, table string, id int) (Noder, error) {
 	switch table {
+	case comment.Table:
+		query := c.Comment.Query().
+			Where(comment.ID(id))
+		query, err := query.CollectFields(ctx, "Comment")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case epic.Table:
 		query := c.Epic.Query().
 			Where(epic.ID(id))
@@ -372,6 +492,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []int) ([]Noder, 
 		idmap[id] = append(idmap[id], &noders[i])
 	}
 	switch table {
+	case comment.Table:
+		query := c.Comment.Query().
+			Where(comment.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Comment")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case epic.Table:
 		query := c.Epic.Query().
 			Where(epic.IDIn(ids...))

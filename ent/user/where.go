@@ -333,6 +333,33 @@ func EmailContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldEmail, v))
 }
 
+// HasOwns applies the HasEdge predicate on the "owns" edge.
+func HasOwns() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OwnsTable, OwnsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOwnsWith applies the HasEdge predicate on the "owns" edge with a given conditions (other predicates).
+func HasOwnsWith(preds ...predicate.Project) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(OwnsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OwnsTable, OwnsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasReporter applies the HasEdge predicate on the "reporter" edge.
 func HasReporter() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -345,7 +372,7 @@ func HasReporter() predicate.User {
 }
 
 // HasReporterWith applies the HasEdge predicate on the "reporter" edge with a given conditions (other predicates).
-func HasReporterWith(preds ...predicate.Project) predicate.User {
+func HasReporterWith(preds ...predicate.Epic) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
@@ -372,12 +399,39 @@ func HasAssignee() predicate.User {
 }
 
 // HasAssigneeWith applies the HasEdge predicate on the "assignee" edge with a given conditions (other predicates).
-func HasAssigneeWith(preds ...predicate.Project) predicate.User {
+func HasAssigneeWith(preds ...predicate.Epic) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(AssigneeInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, AssigneeTable, AssigneeColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasComments applies the HasEdge predicate on the "comments" edge.
+func HasComments() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, CommentsTable, CommentsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommentsWith applies the HasEdge predicate on the "comments" edge with a given conditions (other predicates).
+func HasCommentsWith(preds ...predicate.Comment) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(CommentsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, CommentsTable, CommentsPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

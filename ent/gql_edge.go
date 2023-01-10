@@ -8,12 +8,76 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+func (c *Comment) Epics(ctx context.Context) (result []*Epic, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = c.NamedEpics(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = c.Edges.EpicsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = c.QueryEpics().All(ctx)
+	}
+	return result, err
+}
+
+func (c *Comment) Projects(ctx context.Context) (result []*Project, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = c.NamedProjects(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = c.Edges.ProjectsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = c.QueryProjects().All(ctx)
+	}
+	return result, err
+}
+
+func (c *Comment) Users(ctx context.Context) (result []*User, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = c.NamedUsers(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = c.Edges.UsersOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = c.QueryUsers().All(ctx)
+	}
+	return result, err
+}
+
 func (e *Epic) Project(ctx context.Context) (*Project, error) {
 	result, err := e.Edges.ProjectOrErr()
 	if IsNotLoaded(err) {
 		result, err = e.QueryProject().Only(ctx)
 	}
 	return result, MaskNotFound(err)
+}
+
+func (e *Epic) Reporter(ctx context.Context) (*User, error) {
+	result, err := e.Edges.ReporterOrErr()
+	if IsNotLoaded(err) {
+		result, err = e.QueryReporter().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (e *Epic) Assignee(ctx context.Context) (*User, error) {
+	result, err := e.Edges.AssigneeOrErr()
+	if IsNotLoaded(err) {
+		result, err = e.QueryAssignee().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (e *Epic) Comments(ctx context.Context) (result []*Comment, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = e.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = e.Edges.CommentsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = e.QueryComments().All(ctx)
+	}
+	return result, err
 }
 
 func (pr *Project) Epics(ctx context.Context) (result []*Epic, err error) {
@@ -28,23 +92,39 @@ func (pr *Project) Epics(ctx context.Context) (result []*Epic, err error) {
 	return result, err
 }
 
-func (pr *Project) Reporter(ctx context.Context) (*User, error) {
-	result, err := pr.Edges.ReporterOrErr()
+func (pr *Project) Owner(ctx context.Context) (*User, error) {
+	result, err := pr.Edges.OwnerOrErr()
 	if IsNotLoaded(err) {
-		result, err = pr.QueryReporter().Only(ctx)
+		result, err = pr.QueryOwner().Only(ctx)
 	}
 	return result, MaskNotFound(err)
 }
 
-func (pr *Project) Assignee(ctx context.Context) (*User, error) {
-	result, err := pr.Edges.AssigneeOrErr()
-	if IsNotLoaded(err) {
-		result, err = pr.QueryAssignee().Only(ctx)
+func (pr *Project) Comments(ctx context.Context) (result []*Comment, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = pr.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = pr.Edges.CommentsOrErr()
 	}
-	return result, MaskNotFound(err)
+	if IsNotLoaded(err) {
+		result, err = pr.QueryComments().All(ctx)
+	}
+	return result, err
 }
 
-func (u *User) Reporter(ctx context.Context) (result []*Project, err error) {
+func (u *User) Owns(ctx context.Context) (result []*Project, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = u.NamedOwns(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = u.Edges.OwnsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = u.QueryOwns().All(ctx)
+	}
+	return result, err
+}
+
+func (u *User) Reporter(ctx context.Context) (result []*Epic, err error) {
 	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
 		result, err = u.NamedReporter(graphql.GetFieldContext(ctx).Field.Alias)
 	} else {
@@ -56,7 +136,7 @@ func (u *User) Reporter(ctx context.Context) (result []*Project, err error) {
 	return result, err
 }
 
-func (u *User) Assignee(ctx context.Context) (result []*Project, err error) {
+func (u *User) Assignee(ctx context.Context) (result []*Epic, err error) {
 	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
 		result, err = u.NamedAssignee(graphql.GetFieldContext(ctx).Field.Alias)
 	} else {
@@ -64,6 +144,18 @@ func (u *User) Assignee(ctx context.Context) (result []*Project, err error) {
 	}
 	if IsNotLoaded(err) {
 		result, err = u.QueryAssignee().All(ctx)
+	}
+	return result, err
+}
+
+func (u *User) Comments(ctx context.Context) (result []*Comment, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = u.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = u.Edges.CommentsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = u.QueryComments().All(ctx)
 	}
 	return result, err
 }

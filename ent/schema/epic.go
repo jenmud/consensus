@@ -26,6 +26,7 @@ func (Epic) Annotations() []schema.Annotation {
 func (Epic) Mixins() []ent.Mixin {
 	return []ent.Mixin{
 		TimeMixin{},
+		TaskMixin{},
 	}
 }
 
@@ -33,6 +34,7 @@ func (Epic) Mixins() []ent.Mixin {
 func (Epic) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").Unique().NotEmpty(),
+		field.String("description"),
 	}
 }
 
@@ -40,5 +42,8 @@ func (Epic) Fields() []ent.Field {
 func (Epic) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("project", Project.Type).Unique(),
+		edge.From("reporter", User.Type).Ref("reporter").Unique(),
+		edge.From("assignee", User.Type).Ref("assignee").Unique(),
+		edge.To("comments", Comment.Type),
 	}
 }

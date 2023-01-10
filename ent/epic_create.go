@@ -9,8 +9,10 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
+	"github.com/jenmud/consensus/ent/user"
 )
 
 // EpicCreate is the builder for creating a Epic entity.
@@ -23,6 +25,12 @@ type EpicCreate struct {
 // SetName sets the "name" field.
 func (ec *EpicCreate) SetName(s string) *EpicCreate {
 	ec.mutation.SetName(s)
+	return ec
+}
+
+// SetDescription sets the "description" field.
+func (ec *EpicCreate) SetDescription(s string) *EpicCreate {
+	ec.mutation.SetDescription(s)
 	return ec
 }
 
@@ -43,6 +51,59 @@ func (ec *EpicCreate) SetNillableProjectID(id *int) *EpicCreate {
 // SetProject sets the "project" edge to the Project entity.
 func (ec *EpicCreate) SetProject(p *Project) *EpicCreate {
 	return ec.SetProjectID(p.ID)
+}
+
+// SetReporterID sets the "reporter" edge to the User entity by ID.
+func (ec *EpicCreate) SetReporterID(id int) *EpicCreate {
+	ec.mutation.SetReporterID(id)
+	return ec
+}
+
+// SetNillableReporterID sets the "reporter" edge to the User entity by ID if the given value is not nil.
+func (ec *EpicCreate) SetNillableReporterID(id *int) *EpicCreate {
+	if id != nil {
+		ec = ec.SetReporterID(*id)
+	}
+	return ec
+}
+
+// SetReporter sets the "reporter" edge to the User entity.
+func (ec *EpicCreate) SetReporter(u *User) *EpicCreate {
+	return ec.SetReporterID(u.ID)
+}
+
+// SetAssigneeID sets the "assignee" edge to the User entity by ID.
+func (ec *EpicCreate) SetAssigneeID(id int) *EpicCreate {
+	ec.mutation.SetAssigneeID(id)
+	return ec
+}
+
+// SetNillableAssigneeID sets the "assignee" edge to the User entity by ID if the given value is not nil.
+func (ec *EpicCreate) SetNillableAssigneeID(id *int) *EpicCreate {
+	if id != nil {
+		ec = ec.SetAssigneeID(*id)
+	}
+	return ec
+}
+
+// SetAssignee sets the "assignee" edge to the User entity.
+func (ec *EpicCreate) SetAssignee(u *User) *EpicCreate {
+	return ec.SetAssigneeID(u.ID)
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (ec *EpicCreate) AddCommentIDs(ids ...int) *EpicCreate {
+	ec.mutation.AddCommentIDs(ids...)
+	return ec
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (ec *EpicCreate) AddComments(c ...*Comment) *EpicCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return ec.AddCommentIDs(ids...)
 }
 
 // Mutation returns the EpicMutation object of the builder.
@@ -87,6 +148,9 @@ func (ec *EpicCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Epic.name": %w`, err)}
 		}
 	}
+	if _, ok := ec.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Epic.description"`)}
+	}
 	return nil
 }
 
@@ -123,6 +187,10 @@ func (ec *EpicCreate) createSpec() (*Epic, *sqlgraph.CreateSpec) {
 		_spec.SetField(epic.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := ec.mutation.Description(); ok {
+		_spec.SetField(epic.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
 	if nodes := ec.mutation.ProjectIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -141,6 +209,65 @@ func (ec *EpicCreate) createSpec() (*Epic, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.epic_project = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.ReporterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   epic.ReporterTable,
+			Columns: []string{epic.ReporterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_reporter = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.AssigneeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   epic.AssigneeTable,
+			Columns: []string{epic.AssigneeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_assignee = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   epic.CommentsTable,
+			Columns: epic.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -10,6 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
+	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
@@ -52,34 +54,64 @@ func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	return uu
 }
 
-// AddReporterIDs adds the "reporter" edge to the Project entity by IDs.
+// AddOwnIDs adds the "owns" edge to the Project entity by IDs.
+func (uu *UserUpdate) AddOwnIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddOwnIDs(ids...)
+	return uu
+}
+
+// AddOwns adds the "owns" edges to the Project entity.
+func (uu *UserUpdate) AddOwns(p ...*Project) *UserUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddOwnIDs(ids...)
+}
+
+// AddReporterIDs adds the "reporter" edge to the Epic entity by IDs.
 func (uu *UserUpdate) AddReporterIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddReporterIDs(ids...)
 	return uu
 }
 
-// AddReporter adds the "reporter" edges to the Project entity.
-func (uu *UserUpdate) AddReporter(p ...*Project) *UserUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddReporter adds the "reporter" edges to the Epic entity.
+func (uu *UserUpdate) AddReporter(e ...*Epic) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uu.AddReporterIDs(ids...)
 }
 
-// AddAssigneeIDs adds the "assignee" edge to the Project entity by IDs.
+// AddAssigneeIDs adds the "assignee" edge to the Epic entity by IDs.
 func (uu *UserUpdate) AddAssigneeIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddAssigneeIDs(ids...)
 	return uu
 }
 
-// AddAssignee adds the "assignee" edges to the Project entity.
-func (uu *UserUpdate) AddAssignee(p ...*Project) *UserUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddAssignee adds the "assignee" edges to the Epic entity.
+func (uu *UserUpdate) AddAssignee(e ...*Epic) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uu.AddAssigneeIDs(ids...)
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (uu *UserUpdate) AddCommentIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddCommentIDs(ids...)
+	return uu
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (uu *UserUpdate) AddComments(c ...*Comment) *UserUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.AddCommentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -87,46 +119,88 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearReporter clears all "reporter" edges to the Project entity.
+// ClearOwns clears all "owns" edges to the Project entity.
+func (uu *UserUpdate) ClearOwns() *UserUpdate {
+	uu.mutation.ClearOwns()
+	return uu
+}
+
+// RemoveOwnIDs removes the "owns" edge to Project entities by IDs.
+func (uu *UserUpdate) RemoveOwnIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveOwnIDs(ids...)
+	return uu
+}
+
+// RemoveOwns removes "owns" edges to Project entities.
+func (uu *UserUpdate) RemoveOwns(p ...*Project) *UserUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemoveOwnIDs(ids...)
+}
+
+// ClearReporter clears all "reporter" edges to the Epic entity.
 func (uu *UserUpdate) ClearReporter() *UserUpdate {
 	uu.mutation.ClearReporter()
 	return uu
 }
 
-// RemoveReporterIDs removes the "reporter" edge to Project entities by IDs.
+// RemoveReporterIDs removes the "reporter" edge to Epic entities by IDs.
 func (uu *UserUpdate) RemoveReporterIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveReporterIDs(ids...)
 	return uu
 }
 
-// RemoveReporter removes "reporter" edges to Project entities.
-func (uu *UserUpdate) RemoveReporter(p ...*Project) *UserUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// RemoveReporter removes "reporter" edges to Epic entities.
+func (uu *UserUpdate) RemoveReporter(e ...*Epic) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uu.RemoveReporterIDs(ids...)
 }
 
-// ClearAssignee clears all "assignee" edges to the Project entity.
+// ClearAssignee clears all "assignee" edges to the Epic entity.
 func (uu *UserUpdate) ClearAssignee() *UserUpdate {
 	uu.mutation.ClearAssignee()
 	return uu
 }
 
-// RemoveAssigneeIDs removes the "assignee" edge to Project entities by IDs.
+// RemoveAssigneeIDs removes the "assignee" edge to Epic entities by IDs.
 func (uu *UserUpdate) RemoveAssigneeIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveAssigneeIDs(ids...)
 	return uu
 }
 
-// RemoveAssignee removes "assignee" edges to Project entities.
-func (uu *UserUpdate) RemoveAssignee(p ...*Project) *UserUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// RemoveAssignee removes "assignee" edges to Epic entities.
+func (uu *UserUpdate) RemoveAssignee(e ...*Epic) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uu.RemoveAssigneeIDs(ids...)
+}
+
+// ClearComments clears all "comments" edges to the Comment entity.
+func (uu *UserUpdate) ClearComments() *UserUpdate {
+	uu.mutation.ClearComments()
+	return uu
+}
+
+// RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
+func (uu *UserUpdate) RemoveCommentIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveCommentIDs(ids...)
+	return uu
+}
+
+// RemoveComments removes "comments" edges to Comment entities.
+func (uu *UserUpdate) RemoveComments(c ...*Comment) *UserUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.RemoveCommentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -214,6 +288,60 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
+	if uu.mutation.OwnsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedOwnsIDs(); len(nodes) > 0 && !uu.mutation.OwnsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.OwnsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if uu.mutation.ReporterCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -224,7 +352,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -240,7 +368,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -259,7 +387,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -278,7 +406,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -294,7 +422,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -313,7 +441,61 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !uu.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}
@@ -366,34 +548,64 @@ func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
 	return uuo
 }
 
-// AddReporterIDs adds the "reporter" edge to the Project entity by IDs.
+// AddOwnIDs adds the "owns" edge to the Project entity by IDs.
+func (uuo *UserUpdateOne) AddOwnIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddOwnIDs(ids...)
+	return uuo
+}
+
+// AddOwns adds the "owns" edges to the Project entity.
+func (uuo *UserUpdateOne) AddOwns(p ...*Project) *UserUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddOwnIDs(ids...)
+}
+
+// AddReporterIDs adds the "reporter" edge to the Epic entity by IDs.
 func (uuo *UserUpdateOne) AddReporterIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddReporterIDs(ids...)
 	return uuo
 }
 
-// AddReporter adds the "reporter" edges to the Project entity.
-func (uuo *UserUpdateOne) AddReporter(p ...*Project) *UserUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddReporter adds the "reporter" edges to the Epic entity.
+func (uuo *UserUpdateOne) AddReporter(e ...*Epic) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uuo.AddReporterIDs(ids...)
 }
 
-// AddAssigneeIDs adds the "assignee" edge to the Project entity by IDs.
+// AddAssigneeIDs adds the "assignee" edge to the Epic entity by IDs.
 func (uuo *UserUpdateOne) AddAssigneeIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddAssigneeIDs(ids...)
 	return uuo
 }
 
-// AddAssignee adds the "assignee" edges to the Project entity.
-func (uuo *UserUpdateOne) AddAssignee(p ...*Project) *UserUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddAssignee adds the "assignee" edges to the Epic entity.
+func (uuo *UserUpdateOne) AddAssignee(e ...*Epic) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uuo.AddAssigneeIDs(ids...)
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (uuo *UserUpdateOne) AddCommentIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddCommentIDs(ids...)
+	return uuo
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (uuo *UserUpdateOne) AddComments(c ...*Comment) *UserUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.AddCommentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -401,46 +613,88 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearReporter clears all "reporter" edges to the Project entity.
+// ClearOwns clears all "owns" edges to the Project entity.
+func (uuo *UserUpdateOne) ClearOwns() *UserUpdateOne {
+	uuo.mutation.ClearOwns()
+	return uuo
+}
+
+// RemoveOwnIDs removes the "owns" edge to Project entities by IDs.
+func (uuo *UserUpdateOne) RemoveOwnIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveOwnIDs(ids...)
+	return uuo
+}
+
+// RemoveOwns removes "owns" edges to Project entities.
+func (uuo *UserUpdateOne) RemoveOwns(p ...*Project) *UserUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemoveOwnIDs(ids...)
+}
+
+// ClearReporter clears all "reporter" edges to the Epic entity.
 func (uuo *UserUpdateOne) ClearReporter() *UserUpdateOne {
 	uuo.mutation.ClearReporter()
 	return uuo
 }
 
-// RemoveReporterIDs removes the "reporter" edge to Project entities by IDs.
+// RemoveReporterIDs removes the "reporter" edge to Epic entities by IDs.
 func (uuo *UserUpdateOne) RemoveReporterIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveReporterIDs(ids...)
 	return uuo
 }
 
-// RemoveReporter removes "reporter" edges to Project entities.
-func (uuo *UserUpdateOne) RemoveReporter(p ...*Project) *UserUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// RemoveReporter removes "reporter" edges to Epic entities.
+func (uuo *UserUpdateOne) RemoveReporter(e ...*Epic) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uuo.RemoveReporterIDs(ids...)
 }
 
-// ClearAssignee clears all "assignee" edges to the Project entity.
+// ClearAssignee clears all "assignee" edges to the Epic entity.
 func (uuo *UserUpdateOne) ClearAssignee() *UserUpdateOne {
 	uuo.mutation.ClearAssignee()
 	return uuo
 }
 
-// RemoveAssigneeIDs removes the "assignee" edge to Project entities by IDs.
+// RemoveAssigneeIDs removes the "assignee" edge to Epic entities by IDs.
 func (uuo *UserUpdateOne) RemoveAssigneeIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveAssigneeIDs(ids...)
 	return uuo
 }
 
-// RemoveAssignee removes "assignee" edges to Project entities.
-func (uuo *UserUpdateOne) RemoveAssignee(p ...*Project) *UserUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// RemoveAssignee removes "assignee" edges to Epic entities.
+func (uuo *UserUpdateOne) RemoveAssignee(e ...*Epic) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uuo.RemoveAssigneeIDs(ids...)
+}
+
+// ClearComments clears all "comments" edges to the Comment entity.
+func (uuo *UserUpdateOne) ClearComments() *UserUpdateOne {
+	uuo.mutation.ClearComments()
+	return uuo
+}
+
+// RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
+func (uuo *UserUpdateOne) RemoveCommentIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveCommentIDs(ids...)
+	return uuo
+}
+
+// RemoveComments removes "comments" edges to Comment entities.
+func (uuo *UserUpdateOne) RemoveComments(c ...*Comment) *UserUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.RemoveCommentIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -552,6 +806,60 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
+	if uuo.mutation.OwnsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedOwnsIDs(); len(nodes) > 0 && !uuo.mutation.OwnsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.OwnsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if uuo.mutation.ReporterCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -562,7 +870,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -578,7 +886,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -597,7 +905,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -616,7 +924,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -632,7 +940,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -651,7 +959,61 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !uuo.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}

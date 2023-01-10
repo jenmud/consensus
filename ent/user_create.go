@@ -9,6 +9,8 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
+	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
 )
@@ -44,34 +46,64 @@ func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	return uc
 }
 
-// AddReporterIDs adds the "reporter" edge to the Project entity by IDs.
+// AddOwnIDs adds the "owns" edge to the Project entity by IDs.
+func (uc *UserCreate) AddOwnIDs(ids ...int) *UserCreate {
+	uc.mutation.AddOwnIDs(ids...)
+	return uc
+}
+
+// AddOwns adds the "owns" edges to the Project entity.
+func (uc *UserCreate) AddOwns(p ...*Project) *UserCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddOwnIDs(ids...)
+}
+
+// AddReporterIDs adds the "reporter" edge to the Epic entity by IDs.
 func (uc *UserCreate) AddReporterIDs(ids ...int) *UserCreate {
 	uc.mutation.AddReporterIDs(ids...)
 	return uc
 }
 
-// AddReporter adds the "reporter" edges to the Project entity.
-func (uc *UserCreate) AddReporter(p ...*Project) *UserCreate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddReporter adds the "reporter" edges to the Epic entity.
+func (uc *UserCreate) AddReporter(e ...*Epic) *UserCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uc.AddReporterIDs(ids...)
 }
 
-// AddAssigneeIDs adds the "assignee" edge to the Project entity by IDs.
+// AddAssigneeIDs adds the "assignee" edge to the Epic entity by IDs.
 func (uc *UserCreate) AddAssigneeIDs(ids ...int) *UserCreate {
 	uc.mutation.AddAssigneeIDs(ids...)
 	return uc
 }
 
-// AddAssignee adds the "assignee" edges to the Project entity.
-func (uc *UserCreate) AddAssignee(p ...*Project) *UserCreate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddAssignee adds the "assignee" edges to the Epic entity.
+func (uc *UserCreate) AddAssignee(e ...*Epic) *UserCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
 	return uc.AddAssigneeIDs(ids...)
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (uc *UserCreate) AddCommentIDs(ids ...int) *UserCreate {
+	uc.mutation.AddCommentIDs(ids...)
+	return uc
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (uc *UserCreate) AddComments(c ...*Comment) *UserCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddCommentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -188,6 +220,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
+	if nodes := uc.mutation.OwnsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnsTable,
+			Columns: []string{user.OwnsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := uc.mutation.ReporterIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -198,7 +249,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
 				},
 			},
 		}
@@ -217,7 +268,26 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: project.FieldID,
+					Column: epic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommentsTable,
+			Columns: user.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}

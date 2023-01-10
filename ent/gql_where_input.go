@@ -6,11 +6,256 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/user"
 )
+
+// CommentWhereInput represents a where input for filtering Comment queries.
+type CommentWhereInput struct {
+	Predicates []predicate.Comment  `json:"-"`
+	Not        *CommentWhereInput   `json:"not,omitempty"`
+	Or         []*CommentWhereInput `json:"or,omitempty"`
+	And        []*CommentWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *int  `json:"id,omitempty"`
+	IDNEQ   *int  `json:"idNEQ,omitempty"`
+	IDIn    []int `json:"idIn,omitempty"`
+	IDNotIn []int `json:"idNotIn,omitempty"`
+	IDGT    *int  `json:"idGT,omitempty"`
+	IDGTE   *int  `json:"idGTE,omitempty"`
+	IDLT    *int  `json:"idLT,omitempty"`
+	IDLTE   *int  `json:"idLTE,omitempty"`
+
+	// "text" field predicates.
+	Text             *string  `json:"text,omitempty"`
+	TextNEQ          *string  `json:"textNEQ,omitempty"`
+	TextIn           []string `json:"textIn,omitempty"`
+	TextNotIn        []string `json:"textNotIn,omitempty"`
+	TextGT           *string  `json:"textGT,omitempty"`
+	TextGTE          *string  `json:"textGTE,omitempty"`
+	TextLT           *string  `json:"textLT,omitempty"`
+	TextLTE          *string  `json:"textLTE,omitempty"`
+	TextContains     *string  `json:"textContains,omitempty"`
+	TextHasPrefix    *string  `json:"textHasPrefix,omitempty"`
+	TextHasSuffix    *string  `json:"textHasSuffix,omitempty"`
+	TextEqualFold    *string  `json:"textEqualFold,omitempty"`
+	TextContainsFold *string  `json:"textContainsFold,omitempty"`
+
+	// "epics" edge predicates.
+	HasEpics     *bool             `json:"hasEpics,omitempty"`
+	HasEpicsWith []*EpicWhereInput `json:"hasEpicsWith,omitempty"`
+
+	// "projects" edge predicates.
+	HasProjects     *bool                `json:"hasProjects,omitempty"`
+	HasProjectsWith []*ProjectWhereInput `json:"hasProjectsWith,omitempty"`
+
+	// "users" edge predicates.
+	HasUsers     *bool             `json:"hasUsers,omitempty"`
+	HasUsersWith []*UserWhereInput `json:"hasUsersWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *CommentWhereInput) AddPredicates(predicates ...predicate.Comment) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the CommentWhereInput filter on the CommentQuery builder.
+func (i *CommentWhereInput) Filter(q *CommentQuery) (*CommentQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyCommentWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyCommentWhereInput is returned in case the CommentWhereInput is empty.
+var ErrEmptyCommentWhereInput = errors.New("ent: empty predicate CommentWhereInput")
+
+// P returns a predicate for filtering comments.
+// An error is returned if the input is empty or invalid.
+func (i *CommentWhereInput) P() (predicate.Comment, error) {
+	var predicates []predicate.Comment
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, comment.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.Comment, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, comment.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.Comment, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, comment.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, comment.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, comment.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, comment.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, comment.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, comment.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, comment.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, comment.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, comment.IDLTE(*i.IDLTE))
+	}
+	if i.Text != nil {
+		predicates = append(predicates, comment.TextEQ(*i.Text))
+	}
+	if i.TextNEQ != nil {
+		predicates = append(predicates, comment.TextNEQ(*i.TextNEQ))
+	}
+	if len(i.TextIn) > 0 {
+		predicates = append(predicates, comment.TextIn(i.TextIn...))
+	}
+	if len(i.TextNotIn) > 0 {
+		predicates = append(predicates, comment.TextNotIn(i.TextNotIn...))
+	}
+	if i.TextGT != nil {
+		predicates = append(predicates, comment.TextGT(*i.TextGT))
+	}
+	if i.TextGTE != nil {
+		predicates = append(predicates, comment.TextGTE(*i.TextGTE))
+	}
+	if i.TextLT != nil {
+		predicates = append(predicates, comment.TextLT(*i.TextLT))
+	}
+	if i.TextLTE != nil {
+		predicates = append(predicates, comment.TextLTE(*i.TextLTE))
+	}
+	if i.TextContains != nil {
+		predicates = append(predicates, comment.TextContains(*i.TextContains))
+	}
+	if i.TextHasPrefix != nil {
+		predicates = append(predicates, comment.TextHasPrefix(*i.TextHasPrefix))
+	}
+	if i.TextHasSuffix != nil {
+		predicates = append(predicates, comment.TextHasSuffix(*i.TextHasSuffix))
+	}
+	if i.TextEqualFold != nil {
+		predicates = append(predicates, comment.TextEqualFold(*i.TextEqualFold))
+	}
+	if i.TextContainsFold != nil {
+		predicates = append(predicates, comment.TextContainsFold(*i.TextContainsFold))
+	}
+
+	if i.HasEpics != nil {
+		p := comment.HasEpics()
+		if !*i.HasEpics {
+			p = comment.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasEpicsWith) > 0 {
+		with := make([]predicate.Epic, 0, len(i.HasEpicsWith))
+		for _, w := range i.HasEpicsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasEpicsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, comment.HasEpicsWith(with...))
+	}
+	if i.HasProjects != nil {
+		p := comment.HasProjects()
+		if !*i.HasProjects {
+			p = comment.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasProjectsWith) > 0 {
+		with := make([]predicate.Project, 0, len(i.HasProjectsWith))
+		for _, w := range i.HasProjectsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasProjectsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, comment.HasProjectsWith(with...))
+	}
+	if i.HasUsers != nil {
+		p := comment.HasUsers()
+		if !*i.HasUsers {
+			p = comment.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasUsersWith) > 0 {
+		with := make([]predicate.User, 0, len(i.HasUsersWith))
+		for _, w := range i.HasUsersWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasUsersWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, comment.HasUsersWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyCommentWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return comment.And(predicates...), nil
+	}
+}
 
 // EpicWhereInput represents a where input for filtering Epic queries.
 type EpicWhereInput struct {
@@ -44,9 +289,36 @@ type EpicWhereInput struct {
 	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
 	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
 
+	// "description" field predicates.
+	Description             *string  `json:"description,omitempty"`
+	DescriptionNEQ          *string  `json:"descriptionNEQ,omitempty"`
+	DescriptionIn           []string `json:"descriptionIn,omitempty"`
+	DescriptionNotIn        []string `json:"descriptionNotIn,omitempty"`
+	DescriptionGT           *string  `json:"descriptionGT,omitempty"`
+	DescriptionGTE          *string  `json:"descriptionGTE,omitempty"`
+	DescriptionLT           *string  `json:"descriptionLT,omitempty"`
+	DescriptionLTE          *string  `json:"descriptionLTE,omitempty"`
+	DescriptionContains     *string  `json:"descriptionContains,omitempty"`
+	DescriptionHasPrefix    *string  `json:"descriptionHasPrefix,omitempty"`
+	DescriptionHasSuffix    *string  `json:"descriptionHasSuffix,omitempty"`
+	DescriptionEqualFold    *string  `json:"descriptionEqualFold,omitempty"`
+	DescriptionContainsFold *string  `json:"descriptionContainsFold,omitempty"`
+
 	// "project" edge predicates.
 	HasProject     *bool                `json:"hasProject,omitempty"`
 	HasProjectWith []*ProjectWhereInput `json:"hasProjectWith,omitempty"`
+
+	// "reporter" edge predicates.
+	HasReporter     *bool             `json:"hasReporter,omitempty"`
+	HasReporterWith []*UserWhereInput `json:"hasReporterWith,omitempty"`
+
+	// "assignee" edge predicates.
+	HasAssignee     *bool             `json:"hasAssignee,omitempty"`
+	HasAssigneeWith []*UserWhereInput `json:"hasAssigneeWith,omitempty"`
+
+	// "comments" edge predicates.
+	HasComments     *bool                `json:"hasComments,omitempty"`
+	HasCommentsWith []*CommentWhereInput `json:"hasCommentsWith,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -183,6 +455,45 @@ func (i *EpicWhereInput) P() (predicate.Epic, error) {
 	if i.NameContainsFold != nil {
 		predicates = append(predicates, epic.NameContainsFold(*i.NameContainsFold))
 	}
+	if i.Description != nil {
+		predicates = append(predicates, epic.DescriptionEQ(*i.Description))
+	}
+	if i.DescriptionNEQ != nil {
+		predicates = append(predicates, epic.DescriptionNEQ(*i.DescriptionNEQ))
+	}
+	if len(i.DescriptionIn) > 0 {
+		predicates = append(predicates, epic.DescriptionIn(i.DescriptionIn...))
+	}
+	if len(i.DescriptionNotIn) > 0 {
+		predicates = append(predicates, epic.DescriptionNotIn(i.DescriptionNotIn...))
+	}
+	if i.DescriptionGT != nil {
+		predicates = append(predicates, epic.DescriptionGT(*i.DescriptionGT))
+	}
+	if i.DescriptionGTE != nil {
+		predicates = append(predicates, epic.DescriptionGTE(*i.DescriptionGTE))
+	}
+	if i.DescriptionLT != nil {
+		predicates = append(predicates, epic.DescriptionLT(*i.DescriptionLT))
+	}
+	if i.DescriptionLTE != nil {
+		predicates = append(predicates, epic.DescriptionLTE(*i.DescriptionLTE))
+	}
+	if i.DescriptionContains != nil {
+		predicates = append(predicates, epic.DescriptionContains(*i.DescriptionContains))
+	}
+	if i.DescriptionHasPrefix != nil {
+		predicates = append(predicates, epic.DescriptionHasPrefix(*i.DescriptionHasPrefix))
+	}
+	if i.DescriptionHasSuffix != nil {
+		predicates = append(predicates, epic.DescriptionHasSuffix(*i.DescriptionHasSuffix))
+	}
+	if i.DescriptionEqualFold != nil {
+		predicates = append(predicates, epic.DescriptionEqualFold(*i.DescriptionEqualFold))
+	}
+	if i.DescriptionContainsFold != nil {
+		predicates = append(predicates, epic.DescriptionContainsFold(*i.DescriptionContainsFold))
+	}
 
 	if i.HasProject != nil {
 		p := epic.HasProject()
@@ -201,6 +512,60 @@ func (i *EpicWhereInput) P() (predicate.Epic, error) {
 			with = append(with, p)
 		}
 		predicates = append(predicates, epic.HasProjectWith(with...))
+	}
+	if i.HasReporter != nil {
+		p := epic.HasReporter()
+		if !*i.HasReporter {
+			p = epic.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasReporterWith) > 0 {
+		with := make([]predicate.User, 0, len(i.HasReporterWith))
+		for _, w := range i.HasReporterWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasReporterWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, epic.HasReporterWith(with...))
+	}
+	if i.HasAssignee != nil {
+		p := epic.HasAssignee()
+		if !*i.HasAssignee {
+			p = epic.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasAssigneeWith) > 0 {
+		with := make([]predicate.User, 0, len(i.HasAssigneeWith))
+		for _, w := range i.HasAssigneeWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasAssigneeWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, epic.HasAssigneeWith(with...))
+	}
+	if i.HasComments != nil {
+		p := epic.HasComments()
+		if !*i.HasComments {
+			p = epic.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasCommentsWith) > 0 {
+		with := make([]predicate.Comment, 0, len(i.HasCommentsWith))
+		for _, w := range i.HasCommentsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasCommentsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, epic.HasCommentsWith(with...))
 	}
 	switch len(predicates) {
 	case 0:
@@ -265,13 +630,13 @@ type ProjectWhereInput struct {
 	HasEpics     *bool             `json:"hasEpics,omitempty"`
 	HasEpicsWith []*EpicWhereInput `json:"hasEpicsWith,omitempty"`
 
-	// "reporter" edge predicates.
-	HasReporter     *bool             `json:"hasReporter,omitempty"`
-	HasReporterWith []*UserWhereInput `json:"hasReporterWith,omitempty"`
+	// "owner" edge predicates.
+	HasOwner     *bool             `json:"hasOwner,omitempty"`
+	HasOwnerWith []*UserWhereInput `json:"hasOwnerWith,omitempty"`
 
-	// "assignee" edge predicates.
-	HasAssignee     *bool             `json:"hasAssignee,omitempty"`
-	HasAssigneeWith []*UserWhereInput `json:"hasAssigneeWith,omitempty"`
+	// "comments" edge predicates.
+	HasComments     *bool                `json:"hasComments,omitempty"`
+	HasCommentsWith []*CommentWhereInput `json:"hasCommentsWith,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -472,41 +837,41 @@ func (i *ProjectWhereInput) P() (predicate.Project, error) {
 		}
 		predicates = append(predicates, project.HasEpicsWith(with...))
 	}
-	if i.HasReporter != nil {
-		p := project.HasReporter()
-		if !*i.HasReporter {
+	if i.HasOwner != nil {
+		p := project.HasOwner()
+		if !*i.HasOwner {
 			p = project.Not(p)
 		}
 		predicates = append(predicates, p)
 	}
-	if len(i.HasReporterWith) > 0 {
-		with := make([]predicate.User, 0, len(i.HasReporterWith))
-		for _, w := range i.HasReporterWith {
+	if len(i.HasOwnerWith) > 0 {
+		with := make([]predicate.User, 0, len(i.HasOwnerWith))
+		for _, w := range i.HasOwnerWith {
 			p, err := w.P()
 			if err != nil {
-				return nil, fmt.Errorf("%w: field 'HasReporterWith'", err)
+				return nil, fmt.Errorf("%w: field 'HasOwnerWith'", err)
 			}
 			with = append(with, p)
 		}
-		predicates = append(predicates, project.HasReporterWith(with...))
+		predicates = append(predicates, project.HasOwnerWith(with...))
 	}
-	if i.HasAssignee != nil {
-		p := project.HasAssignee()
-		if !*i.HasAssignee {
+	if i.HasComments != nil {
+		p := project.HasComments()
+		if !*i.HasComments {
 			p = project.Not(p)
 		}
 		predicates = append(predicates, p)
 	}
-	if len(i.HasAssigneeWith) > 0 {
-		with := make([]predicate.User, 0, len(i.HasAssigneeWith))
-		for _, w := range i.HasAssigneeWith {
+	if len(i.HasCommentsWith) > 0 {
+		with := make([]predicate.Comment, 0, len(i.HasCommentsWith))
+		for _, w := range i.HasCommentsWith {
 			p, err := w.P()
 			if err != nil {
-				return nil, fmt.Errorf("%w: field 'HasAssigneeWith'", err)
+				return nil, fmt.Errorf("%w: field 'HasCommentsWith'", err)
 			}
 			with = append(with, p)
 		}
-		predicates = append(predicates, project.HasAssigneeWith(with...))
+		predicates = append(predicates, project.HasCommentsWith(with...))
 	}
 	switch len(predicates) {
 	case 0:
@@ -595,13 +960,21 @@ type UserWhereInput struct {
 	EmailEqualFold    *string  `json:"emailEqualFold,omitempty"`
 	EmailContainsFold *string  `json:"emailContainsFold,omitempty"`
 
+	// "owns" edge predicates.
+	HasOwns     *bool                `json:"hasOwns,omitempty"`
+	HasOwnsWith []*ProjectWhereInput `json:"hasOwnsWith,omitempty"`
+
 	// "reporter" edge predicates.
-	HasReporter     *bool                `json:"hasReporter,omitempty"`
-	HasReporterWith []*ProjectWhereInput `json:"hasReporterWith,omitempty"`
+	HasReporter     *bool             `json:"hasReporter,omitempty"`
+	HasReporterWith []*EpicWhereInput `json:"hasReporterWith,omitempty"`
 
 	// "assignee" edge predicates.
-	HasAssignee     *bool                `json:"hasAssignee,omitempty"`
-	HasAssigneeWith []*ProjectWhereInput `json:"hasAssigneeWith,omitempty"`
+	HasAssignee     *bool             `json:"hasAssignee,omitempty"`
+	HasAssigneeWith []*EpicWhereInput `json:"hasAssigneeWith,omitempty"`
+
+	// "comments" edge predicates.
+	HasComments     *bool                `json:"hasComments,omitempty"`
+	HasCommentsWith []*CommentWhereInput `json:"hasCommentsWith,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -856,6 +1229,24 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 		predicates = append(predicates, user.EmailContainsFold(*i.EmailContainsFold))
 	}
 
+	if i.HasOwns != nil {
+		p := user.HasOwns()
+		if !*i.HasOwns {
+			p = user.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasOwnsWith) > 0 {
+		with := make([]predicate.Project, 0, len(i.HasOwnsWith))
+		for _, w := range i.HasOwnsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasOwnsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, user.HasOwnsWith(with...))
+	}
 	if i.HasReporter != nil {
 		p := user.HasReporter()
 		if !*i.HasReporter {
@@ -864,7 +1255,7 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 		predicates = append(predicates, p)
 	}
 	if len(i.HasReporterWith) > 0 {
-		with := make([]predicate.Project, 0, len(i.HasReporterWith))
+		with := make([]predicate.Epic, 0, len(i.HasReporterWith))
 		for _, w := range i.HasReporterWith {
 			p, err := w.P()
 			if err != nil {
@@ -882,7 +1273,7 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 		predicates = append(predicates, p)
 	}
 	if len(i.HasAssigneeWith) > 0 {
-		with := make([]predicate.Project, 0, len(i.HasAssigneeWith))
+		with := make([]predicate.Epic, 0, len(i.HasAssigneeWith))
 		for _, w := range i.HasAssigneeWith {
 			p, err := w.P()
 			if err != nil {
@@ -891,6 +1282,24 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 			with = append(with, p)
 		}
 		predicates = append(predicates, user.HasAssigneeWith(with...))
+	}
+	if i.HasComments != nil {
+		p := user.HasComments()
+		if !*i.HasComments {
+			p = user.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasCommentsWith) > 0 {
+		with := make([]predicate.Comment, 0, len(i.HasCommentsWith))
+		for _, w := range i.HasCommentsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasCommentsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, user.HasCommentsWith(with...))
 	}
 	switch len(predicates) {
 	case 0:

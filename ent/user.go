@@ -30,24 +30,39 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
+	// Owns holds the value of the owns edge.
+	Owns []*Project `json:"owns,omitempty"`
 	// Reporter holds the value of the reporter edge.
-	Reporter []*Project `json:"reporter,omitempty"`
+	Reporter []*Epic `json:"reporter,omitempty"`
 	// Assignee holds the value of the assignee edge.
-	Assignee []*Project `json:"assignee,omitempty"`
+	Assignee []*Epic `json:"assignee,omitempty"`
+	// Comments holds the value of the comments edge.
+	Comments []*Comment `json:"comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
+	totalCount [4]map[string]int
 
-	namedReporter map[string][]*Project
-	namedAssignee map[string][]*Project
+	namedOwns     map[string][]*Project
+	namedReporter map[string][]*Epic
+	namedAssignee map[string][]*Epic
+	namedComments map[string][]*Comment
+}
+
+// OwnsOrErr returns the Owns value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) OwnsOrErr() ([]*Project, error) {
+	if e.loadedTypes[0] {
+		return e.Owns, nil
+	}
+	return nil, &NotLoadedError{edge: "owns"}
 }
 
 // ReporterOrErr returns the Reporter value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) ReporterOrErr() ([]*Project, error) {
-	if e.loadedTypes[0] {
+func (e UserEdges) ReporterOrErr() ([]*Epic, error) {
+	if e.loadedTypes[1] {
 		return e.Reporter, nil
 	}
 	return nil, &NotLoadedError{edge: "reporter"}
@@ -55,11 +70,20 @@ func (e UserEdges) ReporterOrErr() ([]*Project, error) {
 
 // AssigneeOrErr returns the Assignee value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) AssigneeOrErr() ([]*Project, error) {
-	if e.loadedTypes[1] {
+func (e UserEdges) AssigneeOrErr() ([]*Epic, error) {
+	if e.loadedTypes[2] {
 		return e.Assignee, nil
 	}
 	return nil, &NotLoadedError{edge: "assignee"}
+}
+
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CommentsOrErr() ([]*Comment, error) {
+	if e.loadedTypes[3] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -121,14 +145,24 @@ func (u *User) assignValues(columns []string, values []any) error {
 	return nil
 }
 
+// QueryOwns queries the "owns" edge of the User entity.
+func (u *User) QueryOwns() *ProjectQuery {
+	return (&UserClient{config: u.config}).QueryOwns(u)
+}
+
 // QueryReporter queries the "reporter" edge of the User entity.
-func (u *User) QueryReporter() *ProjectQuery {
+func (u *User) QueryReporter() *EpicQuery {
 	return (&UserClient{config: u.config}).QueryReporter(u)
 }
 
 // QueryAssignee queries the "assignee" edge of the User entity.
-func (u *User) QueryAssignee() *ProjectQuery {
+func (u *User) QueryAssignee() *EpicQuery {
 	return (&UserClient{config: u.config}).QueryAssignee(u)
+}
+
+// QueryComments queries the "comments" edge of the User entity.
+func (u *User) QueryComments() *CommentQuery {
+	return (&UserClient{config: u.config}).QueryComments(u)
 }
 
 // Update returns a builder for updating this User.
@@ -169,9 +203,33 @@ func (u *User) String() string {
 	return builder.String()
 }
 
+// NamedOwns returns the Owns named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedOwns(name string) ([]*Project, error) {
+	if u.Edges.namedOwns == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedOwns[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedOwns(name string, edges ...*Project) {
+	if u.Edges.namedOwns == nil {
+		u.Edges.namedOwns = make(map[string][]*Project)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedOwns[name] = []*Project{}
+	} else {
+		u.Edges.namedOwns[name] = append(u.Edges.namedOwns[name], edges...)
+	}
+}
+
 // NamedReporter returns the Reporter named value or an error if the edge was not
 // loaded in eager-loading with this name.
-func (u *User) NamedReporter(name string) ([]*Project, error) {
+func (u *User) NamedReporter(name string) ([]*Epic, error) {
 	if u.Edges.namedReporter == nil {
 		return nil, &NotLoadedError{edge: name}
 	}
@@ -182,12 +240,12 @@ func (u *User) NamedReporter(name string) ([]*Project, error) {
 	return nodes, nil
 }
 
-func (u *User) appendNamedReporter(name string, edges ...*Project) {
+func (u *User) appendNamedReporter(name string, edges ...*Epic) {
 	if u.Edges.namedReporter == nil {
-		u.Edges.namedReporter = make(map[string][]*Project)
+		u.Edges.namedReporter = make(map[string][]*Epic)
 	}
 	if len(edges) == 0 {
-		u.Edges.namedReporter[name] = []*Project{}
+		u.Edges.namedReporter[name] = []*Epic{}
 	} else {
 		u.Edges.namedReporter[name] = append(u.Edges.namedReporter[name], edges...)
 	}
@@ -195,7 +253,7 @@ func (u *User) appendNamedReporter(name string, edges ...*Project) {
 
 // NamedAssignee returns the Assignee named value or an error if the edge was not
 // loaded in eager-loading with this name.
-func (u *User) NamedAssignee(name string) ([]*Project, error) {
+func (u *User) NamedAssignee(name string) ([]*Epic, error) {
 	if u.Edges.namedAssignee == nil {
 		return nil, &NotLoadedError{edge: name}
 	}
@@ -206,14 +264,38 @@ func (u *User) NamedAssignee(name string) ([]*Project, error) {
 	return nodes, nil
 }
 
-func (u *User) appendNamedAssignee(name string, edges ...*Project) {
+func (u *User) appendNamedAssignee(name string, edges ...*Epic) {
 	if u.Edges.namedAssignee == nil {
-		u.Edges.namedAssignee = make(map[string][]*Project)
+		u.Edges.namedAssignee = make(map[string][]*Epic)
 	}
 	if len(edges) == 0 {
-		u.Edges.namedAssignee[name] = []*Project{}
+		u.Edges.namedAssignee[name] = []*Epic{}
 	} else {
 		u.Edges.namedAssignee[name] = append(u.Edges.namedAssignee[name], edges...)
+	}
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedComments(name string) ([]*Comment, error) {
+	if u.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedComments(name string, edges ...*Comment) {
+	if u.Edges.namedComments == nil {
+		u.Edges.namedComments = make(map[string][]*Comment)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedComments[name] = []*Comment{}
+	} else {
+		u.Edges.namedComments[name] = append(u.Edges.namedComments[name], edges...)
 	}
 }
 

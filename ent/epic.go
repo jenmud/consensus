@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
+	"github.com/jenmud/consensus/ent/user"
 )
 
 // Epic is the model entity for the Epic schema.
@@ -18,21 +19,33 @@ type Epic struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EpicQuery when eager-loading is set.
-	Edges        EpicEdges `json:"edges"`
-	epic_project *int
+	Edges         EpicEdges `json:"edges"`
+	epic_project  *int
+	user_reporter *int
+	user_assignee *int
 }
 
 // EpicEdges holds the relations/edges for other nodes in the graph.
 type EpicEdges struct {
 	// Project holds the value of the project edge.
 	Project *Project `json:"project,omitempty"`
+	// Reporter holds the value of the reporter edge.
+	Reporter *User `json:"reporter,omitempty"`
+	// Assignee holds the value of the assignee edge.
+	Assignee *User `json:"assignee,omitempty"`
+	// Comments holds the value of the comments edge.
+	Comments []*Comment `json:"comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [1]map[string]int
+	totalCount [4]map[string]int
+
+	namedComments map[string][]*Comment
 }
 
 // ProjectOrErr returns the Project value or an error if the edge
@@ -48,6 +61,41 @@ func (e EpicEdges) ProjectOrErr() (*Project, error) {
 	return nil, &NotLoadedError{edge: "project"}
 }
 
+// ReporterOrErr returns the Reporter value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EpicEdges) ReporterOrErr() (*User, error) {
+	if e.loadedTypes[1] {
+		if e.Reporter == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Reporter, nil
+	}
+	return nil, &NotLoadedError{edge: "reporter"}
+}
+
+// AssigneeOrErr returns the Assignee value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EpicEdges) AssigneeOrErr() (*User, error) {
+	if e.loadedTypes[2] {
+		if e.Assignee == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Assignee, nil
+	}
+	return nil, &NotLoadedError{edge: "assignee"}
+}
+
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e EpicEdges) CommentsOrErr() ([]*Comment, error) {
+	if e.loadedTypes[3] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "comments"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Epic) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -55,9 +103,13 @@ func (*Epic) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case epic.FieldID:
 			values[i] = new(sql.NullInt64)
-		case epic.FieldName:
+		case epic.FieldName, epic.FieldDescription:
 			values[i] = new(sql.NullString)
 		case epic.ForeignKeys[0]: // epic_project
+			values[i] = new(sql.NullInt64)
+		case epic.ForeignKeys[1]: // user_reporter
+			values[i] = new(sql.NullInt64)
+		case epic.ForeignKeys[2]: // user_assignee
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Epic", columns[i])
@@ -86,12 +138,32 @@ func (e *Epic) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				e.Name = value.String
 			}
+		case epic.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				e.Description = value.String
+			}
 		case epic.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field epic_project", value)
 			} else if value.Valid {
 				e.epic_project = new(int)
 				*e.epic_project = int(value.Int64)
+			}
+		case epic.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_reporter", value)
+			} else if value.Valid {
+				e.user_reporter = new(int)
+				*e.user_reporter = int(value.Int64)
+			}
+		case epic.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_assignee", value)
+			} else if value.Valid {
+				e.user_assignee = new(int)
+				*e.user_assignee = int(value.Int64)
 			}
 		}
 	}
@@ -101,6 +173,21 @@ func (e *Epic) assignValues(columns []string, values []any) error {
 // QueryProject queries the "project" edge of the Epic entity.
 func (e *Epic) QueryProject() *ProjectQuery {
 	return (&EpicClient{config: e.config}).QueryProject(e)
+}
+
+// QueryReporter queries the "reporter" edge of the Epic entity.
+func (e *Epic) QueryReporter() *UserQuery {
+	return (&EpicClient{config: e.config}).QueryReporter(e)
+}
+
+// QueryAssignee queries the "assignee" edge of the Epic entity.
+func (e *Epic) QueryAssignee() *UserQuery {
+	return (&EpicClient{config: e.config}).QueryAssignee(e)
+}
+
+// QueryComments queries the "comments" edge of the Epic entity.
+func (e *Epic) QueryComments() *CommentQuery {
+	return (&EpicClient{config: e.config}).QueryComments(e)
 }
 
 // Update returns a builder for updating this Epic.
@@ -128,8 +215,35 @@ func (e *Epic) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", e.ID))
 	builder.WriteString("name=")
 	builder.WriteString(e.Name)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(e.Description)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (e *Epic) NamedComments(name string) ([]*Comment, error) {
+	if e.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := e.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (e *Epic) appendNamedComments(name string, edges ...*Comment) {
+	if e.Edges.namedComments == nil {
+		e.Edges.namedComments = make(map[string][]*Comment)
+	}
+	if len(edges) == 0 {
+		e.Edges.namedComments[name] = []*Comment{}
+	} else {
+		e.Edges.namedComments[name] = append(e.Edges.namedComments[name], edges...)
+	}
 }
 
 // Epics is a parsable slice of Epic.

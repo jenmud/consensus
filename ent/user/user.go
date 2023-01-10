@@ -15,26 +15,42 @@ const (
 	FieldUsername = "username"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// EdgeOwns holds the string denoting the owns edge name in mutations.
+	EdgeOwns = "owns"
 	// EdgeReporter holds the string denoting the reporter edge name in mutations.
 	EdgeReporter = "reporter"
 	// EdgeAssignee holds the string denoting the assignee edge name in mutations.
 	EdgeAssignee = "assignee"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "comments"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// ReporterTable is the table that holds the reporter relation/edge.
-	ReporterTable = "projects"
-	// ReporterInverseTable is the table name for the Project entity.
+	// OwnsTable is the table that holds the owns relation/edge.
+	OwnsTable = "projects"
+	// OwnsInverseTable is the table name for the Project entity.
 	// It exists in this package in order to avoid circular dependency with the "project" package.
-	ReporterInverseTable = "projects"
+	OwnsInverseTable = "projects"
+	// OwnsColumn is the table column denoting the owns relation/edge.
+	OwnsColumn = "user_owns"
+	// ReporterTable is the table that holds the reporter relation/edge.
+	ReporterTable = "epics"
+	// ReporterInverseTable is the table name for the Epic entity.
+	// It exists in this package in order to avoid circular dependency with the "epic" package.
+	ReporterInverseTable = "epics"
 	// ReporterColumn is the table column denoting the reporter relation/edge.
 	ReporterColumn = "user_reporter"
 	// AssigneeTable is the table that holds the assignee relation/edge.
-	AssigneeTable = "projects"
-	// AssigneeInverseTable is the table name for the Project entity.
-	// It exists in this package in order to avoid circular dependency with the "project" package.
-	AssigneeInverseTable = "projects"
+	AssigneeTable = "epics"
+	// AssigneeInverseTable is the table name for the Epic entity.
+	// It exists in this package in order to avoid circular dependency with the "epic" package.
+	AssigneeInverseTable = "epics"
 	// AssigneeColumn is the table column denoting the assignee relation/edge.
 	AssigneeColumn = "user_assignee"
+	// CommentsTable is the table that holds the comments relation/edge. The primary key declared below.
+	CommentsTable = "user_comments"
+	// CommentsInverseTable is the table name for the Comment entity.
+	// It exists in this package in order to avoid circular dependency with the "comment" package.
+	CommentsInverseTable = "comments"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -45,6 +61,12 @@ var Columns = []string{
 	FieldUsername,
 	FieldEmail,
 }
+
+var (
+	// CommentsPrimaryKey and CommentsColumn2 are the table columns denoting the
+	// primary key for the comments relation (M2M).
+	CommentsPrimaryKey = []string{"user_id", "comment_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

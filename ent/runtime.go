@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/project"
 	"github.com/jenmud/consensus/ent/schema"
@@ -13,6 +14,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	commentFields := schema.Comment{}.Fields()
+	_ = commentFields
+	// commentDescText is the schema descriptor for text field.
+	commentDescText := commentFields[0].Descriptor()
+	// comment.TextValidator is a validator for the "text" field. It is called by the builders before save.
+	comment.TextValidator = commentDescText.Validators[0].(func(string) error)
 	epicFields := schema.Epic{}.Fields()
 	_ = epicFields
 	// epicDescName is the schema descriptor for name field.

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jenmud/consensus/ent/comment"
 	"github.com/jenmud/consensus/ent/epic"
 	"github.com/jenmud/consensus/ent/predicate"
 	"github.com/jenmud/consensus/ent/project"
@@ -20,20 +21,21 @@ import (
 // ProjectQuery is the builder for querying Project entities.
 type ProjectQuery struct {
 	config
-	limit          *int
-	offset         *int
-	unique         *bool
-	order          []OrderFunc
-	fields         []string
-	inters         []Interceptor
-	predicates     []predicate.Project
-	withEpics      *EpicQuery
-	withReporter   *UserQuery
-	withAssignee   *UserQuery
-	withFKs        bool
-	modifiers      []func(*sql.Selector)
-	loadTotal      []func(context.Context, []*Project) error
-	withNamedEpics map[string]*EpicQuery
+	limit             *int
+	offset            *int
+	unique            *bool
+	order             []OrderFunc
+	fields            []string
+	inters            []Interceptor
+	predicates        []predicate.Project
+	withEpics         *EpicQuery
+	withOwner         *UserQuery
+	withComments      *CommentQuery
+	withFKs           bool
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*Project) error
+	withNamedEpics    map[string]*EpicQuery
+	withNamedComments map[string]*CommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -92,8 +94,8 @@ func (pq *ProjectQuery) QueryEpics() *EpicQuery {
 	return query
 }
 
-// QueryReporter chains the current query on the "reporter" edge.
-func (pq *ProjectQuery) QueryReporter() *UserQuery {
+// QueryOwner chains the current query on the "owner" edge.
+func (pq *ProjectQuery) QueryOwner() *UserQuery {
 	query := (&UserClient{config: pq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := pq.prepareQuery(ctx); err != nil {
@@ -106,7 +108,7 @@ func (pq *ProjectQuery) QueryReporter() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(project.Table, project.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, project.ReporterTable, project.ReporterColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, project.OwnerTable, project.OwnerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -114,9 +116,9 @@ func (pq *ProjectQuery) QueryReporter() *UserQuery {
 	return query
 }
 
-// QueryAssignee chains the current query on the "assignee" edge.
-func (pq *ProjectQuery) QueryAssignee() *UserQuery {
-	query := (&UserClient{config: pq.config}).Query()
+// QueryComments chains the current query on the "comments" edge.
+func (pq *ProjectQuery) QueryComments() *CommentQuery {
+	query := (&CommentClient{config: pq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := pq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -127,8 +129,8 @@ func (pq *ProjectQuery) QueryAssignee() *UserQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(project.Table, project.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, project.AssigneeTable, project.AssigneeColumn),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, project.CommentsTable, project.CommentsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -328,8 +330,8 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		inters:       append([]Interceptor{}, pq.inters...),
 		predicates:   append([]predicate.Project{}, pq.predicates...),
 		withEpics:    pq.withEpics.Clone(),
-		withReporter: pq.withReporter.Clone(),
-		withAssignee: pq.withAssignee.Clone(),
+		withOwner:    pq.withOwner.Clone(),
+		withComments: pq.withComments.Clone(),
 		// clone intermediate query.
 		sql:    pq.sql.Clone(),
 		path:   pq.path,
@@ -348,25 +350,25 @@ func (pq *ProjectQuery) WithEpics(opts ...func(*EpicQuery)) *ProjectQuery {
 	return pq
 }
 
-// WithReporter tells the query-builder to eager-load the nodes that are connected to
-// the "reporter" edge. The optional arguments are used to configure the query builder of the edge.
-func (pq *ProjectQuery) WithReporter(opts ...func(*UserQuery)) *ProjectQuery {
+// WithOwner tells the query-builder to eager-load the nodes that are connected to
+// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithOwner(opts ...func(*UserQuery)) *ProjectQuery {
 	query := (&UserClient{config: pq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	pq.withReporter = query
+	pq.withOwner = query
 	return pq
 }
 
-// WithAssignee tells the query-builder to eager-load the nodes that are connected to
-// the "assignee" edge. The optional arguments are used to configure the query builder of the edge.
-func (pq *ProjectQuery) WithAssignee(opts ...func(*UserQuery)) *ProjectQuery {
-	query := (&UserClient{config: pq.config}).Query()
+// WithComments tells the query-builder to eager-load the nodes that are connected to
+// the "comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithComments(opts ...func(*CommentQuery)) *ProjectQuery {
+	query := (&CommentClient{config: pq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	pq.withAssignee = query
+	pq.withComments = query
 	return pq
 }
 
@@ -451,11 +453,11 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		_spec       = pq.querySpec()
 		loadedTypes = [3]bool{
 			pq.withEpics != nil,
-			pq.withReporter != nil,
-			pq.withAssignee != nil,
+			pq.withOwner != nil,
+			pq.withComments != nil,
 		}
 	)
-	if pq.withReporter != nil || pq.withAssignee != nil {
+	if pq.withOwner != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -489,15 +491,16 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 			return nil, err
 		}
 	}
-	if query := pq.withReporter; query != nil {
-		if err := pq.loadReporter(ctx, query, nodes, nil,
-			func(n *Project, e *User) { n.Edges.Reporter = e }); err != nil {
+	if query := pq.withOwner; query != nil {
+		if err := pq.loadOwner(ctx, query, nodes, nil,
+			func(n *Project, e *User) { n.Edges.Owner = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := pq.withAssignee; query != nil {
-		if err := pq.loadAssignee(ctx, query, nodes, nil,
-			func(n *Project, e *User) { n.Edges.Assignee = e }); err != nil {
+	if query := pq.withComments; query != nil {
+		if err := pq.loadComments(ctx, query, nodes,
+			func(n *Project) { n.Edges.Comments = []*Comment{} },
+			func(n *Project, e *Comment) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -505,6 +508,13 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		if err := pq.loadEpics(ctx, query, nodes,
 			func(n *Project) { n.appendNamedEpics(name) },
 			func(n *Project, e *Epic) { n.appendNamedEpics(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range pq.withNamedComments {
+		if err := pq.loadComments(ctx, query, nodes,
+			func(n *Project) { n.appendNamedComments(name) },
+			func(n *Project, e *Comment) { n.appendNamedComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -547,14 +557,14 @@ func (pq *ProjectQuery) loadEpics(ctx context.Context, query *EpicQuery, nodes [
 	}
 	return nil
 }
-func (pq *ProjectQuery) loadReporter(ctx context.Context, query *UserQuery, nodes []*Project, init func(*Project), assign func(*Project, *User)) error {
+func (pq *ProjectQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Project, init func(*Project), assign func(*Project, *User)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Project)
 	for i := range nodes {
-		if nodes[i].user_reporter == nil {
+		if nodes[i].user_owns == nil {
 			continue
 		}
-		fk := *nodes[i].user_reporter
+		fk := *nodes[i].user_owns
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -568,7 +578,7 @@ func (pq *ProjectQuery) loadReporter(ctx context.Context, query *UserQuery, node
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_reporter" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_owns" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -576,31 +586,60 @@ func (pq *ProjectQuery) loadReporter(ctx context.Context, query *UserQuery, node
 	}
 	return nil
 }
-func (pq *ProjectQuery) loadAssignee(ctx context.Context, query *UserQuery, nodes []*Project, init func(*Project), assign func(*Project, *User)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Project)
-	for i := range nodes {
-		if nodes[i].user_assignee == nil {
-			continue
+func (pq *ProjectQuery) loadComments(ctx context.Context, query *CommentQuery, nodes []*Project, init func(*Project), assign func(*Project, *Comment)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Project)
+	nids := make(map[int]map[*Project]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
 		}
-		fk := *nodes[i].user_assignee
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(project.CommentsTable)
+		s.Join(joinT).On(s.C(comment.FieldID), joinT.C(project.CommentsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(project.CommentsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(project.CommentsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullInt64)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := int(values[0].(*sql.NullInt64).Int64)
+			inValue := int(values[1].(*sql.NullInt64).Int64)
+			if nids[inValue] == nil {
+				nids[inValue] = map[*Project]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_assignee" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "comments" node returned %v`, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
+		for kn := range nodes {
+			assign(kn, n)
 		}
 	}
 	return nil
@@ -709,6 +748,20 @@ func (pq *ProjectQuery) WithNamedEpics(name string, opts ...func(*EpicQuery)) *P
 		pq.withNamedEpics = make(map[string]*EpicQuery)
 	}
 	pq.withNamedEpics[name] = query
+	return pq
+}
+
+// WithNamedComments tells the query-builder to eager-load the nodes that are connected to the "comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithNamedComments(name string, opts ...func(*CommentQuery)) *ProjectQuery {
+	query := (&CommentClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if pq.withNamedComments == nil {
+		pq.withNamedComments = make(map[string]*CommentQuery)
+	}
+	pq.withNamedComments[name] = query
 	return pq
 }
 

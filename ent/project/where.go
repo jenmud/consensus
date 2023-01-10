@@ -230,24 +230,24 @@ func HasEpicsWith(preds ...predicate.Epic) predicate.Project {
 	})
 }
 
-// HasReporter applies the HasEdge predicate on the "reporter" edge.
-func HasReporter() predicate.Project {
+// HasOwner applies the HasEdge predicate on the "owner" edge.
+func HasOwner() predicate.Project {
 	return predicate.Project(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ReporterTable, ReporterColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasReporterWith applies the HasEdge predicate on the "reporter" edge with a given conditions (other predicates).
-func HasReporterWith(preds ...predicate.User) predicate.Project {
+// HasOwnerWith applies the HasEdge predicate on the "owner" edge with a given conditions (other predicates).
+func HasOwnerWith(preds ...predicate.User) predicate.Project {
 	return predicate.Project(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ReporterInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ReporterTable, ReporterColumn),
+			sqlgraph.To(OwnerInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
@@ -257,24 +257,24 @@ func HasReporterWith(preds ...predicate.User) predicate.Project {
 	})
 }
 
-// HasAssignee applies the HasEdge predicate on the "assignee" edge.
-func HasAssignee() predicate.Project {
+// HasComments applies the HasEdge predicate on the "comments" edge.
+func HasComments() predicate.Project {
 	return predicate.Project(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, AssigneeTable, AssigneeColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, CommentsTable, CommentsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasAssigneeWith applies the HasEdge predicate on the "assignee" edge with a given conditions (other predicates).
-func HasAssigneeWith(preds ...predicate.User) predicate.Project {
+// HasCommentsWith applies the HasEdge predicate on the "comments" edge with a given conditions (other predicates).
+func HasCommentsWith(preds ...predicate.Comment) predicate.Project {
 	return predicate.Project(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(AssigneeInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, AssigneeTable, AssigneeColumn),
+			sqlgraph.To(CommentsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, CommentsTable, CommentsPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

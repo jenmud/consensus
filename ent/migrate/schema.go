@@ -8,11 +8,25 @@ import (
 )
 
 var (
+	// CommentsColumns holds the columns for the "comments" table.
+	CommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "text", Type: field.TypeString},
+	}
+	// CommentsTable holds the schema information for the "comments" table.
+	CommentsTable = &schema.Table{
+		Name:       "comments",
+		Columns:    CommentsColumns,
+		PrimaryKey: []*schema.Column{CommentsColumns[0]},
+	}
 	// EpicsColumns holds the columns for the "epics" table.
 	EpicsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "description", Type: field.TypeString},
 		{Name: "epic_project", Type: field.TypeInt, Nullable: true},
+		{Name: "user_reporter", Type: field.TypeInt, Nullable: true},
+		{Name: "user_assignee", Type: field.TypeInt, Nullable: true},
 	}
 	// EpicsTable holds the schema information for the "epics" table.
 	EpicsTable = &schema.Table{
@@ -22,8 +36,20 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "epics_projects_project",
-				Columns:    []*schema.Column{EpicsColumns[2]},
+				Columns:    []*schema.Column{EpicsColumns[3]},
 				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "epics_users_reporter",
+				Columns:    []*schema.Column{EpicsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "epics_users_assignee",
+				Columns:    []*schema.Column{EpicsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -33,8 +59,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
-		{Name: "user_reporter", Type: field.TypeInt, Nullable: true},
-		{Name: "user_assignee", Type: field.TypeInt, Nullable: true},
+		{Name: "user_owns", Type: field.TypeInt, Nullable: true},
 	}
 	// ProjectsTable holds the schema information for the "projects" table.
 	ProjectsTable = &schema.Table{
@@ -43,14 +68,8 @@ var (
 		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "projects_users_reporter",
+				Symbol:     "projects_users_owns",
 				Columns:    []*schema.Column{ProjectsColumns[3]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "projects_users_assignee",
-				Columns:    []*schema.Column{ProjectsColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -70,16 +89,102 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// EpicCommentsColumns holds the columns for the "epic_comments" table.
+	EpicCommentsColumns = []*schema.Column{
+		{Name: "epic_id", Type: field.TypeInt},
+		{Name: "comment_id", Type: field.TypeInt},
+	}
+	// EpicCommentsTable holds the schema information for the "epic_comments" table.
+	EpicCommentsTable = &schema.Table{
+		Name:       "epic_comments",
+		Columns:    EpicCommentsColumns,
+		PrimaryKey: []*schema.Column{EpicCommentsColumns[0], EpicCommentsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "epic_comments_epic_id",
+				Columns:    []*schema.Column{EpicCommentsColumns[0]},
+				RefColumns: []*schema.Column{EpicsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "epic_comments_comment_id",
+				Columns:    []*schema.Column{EpicCommentsColumns[1]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// ProjectCommentsColumns holds the columns for the "project_comments" table.
+	ProjectCommentsColumns = []*schema.Column{
+		{Name: "project_id", Type: field.TypeInt},
+		{Name: "comment_id", Type: field.TypeInt},
+	}
+	// ProjectCommentsTable holds the schema information for the "project_comments" table.
+	ProjectCommentsTable = &schema.Table{
+		Name:       "project_comments",
+		Columns:    ProjectCommentsColumns,
+		PrimaryKey: []*schema.Column{ProjectCommentsColumns[0], ProjectCommentsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "project_comments_project_id",
+				Columns:    []*schema.Column{ProjectCommentsColumns[0]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "project_comments_comment_id",
+				Columns:    []*schema.Column{ProjectCommentsColumns[1]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserCommentsColumns holds the columns for the "user_comments" table.
+	UserCommentsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "comment_id", Type: field.TypeInt},
+	}
+	// UserCommentsTable holds the schema information for the "user_comments" table.
+	UserCommentsTable = &schema.Table{
+		Name:       "user_comments",
+		Columns:    UserCommentsColumns,
+		PrimaryKey: []*schema.Column{UserCommentsColumns[0], UserCommentsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_comments_user_id",
+				Columns:    []*schema.Column{UserCommentsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_comments_comment_id",
+				Columns:    []*schema.Column{UserCommentsColumns[1]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CommentsTable,
 		EpicsTable,
 		ProjectsTable,
 		UsersTable,
+		EpicCommentsTable,
+		ProjectCommentsTable,
+		UserCommentsTable,
 	}
 )
 
 func init() {
 	EpicsTable.ForeignKeys[0].RefTable = ProjectsTable
+	EpicsTable.ForeignKeys[1].RefTable = UsersTable
+	EpicsTable.ForeignKeys[2].RefTable = UsersTable
 	ProjectsTable.ForeignKeys[0].RefTable = UsersTable
-	ProjectsTable.ForeignKeys[1].RefTable = UsersTable
+	EpicCommentsTable.ForeignKeys[0].RefTable = EpicsTable
+	EpicCommentsTable.ForeignKeys[1].RefTable = CommentsTable
+	ProjectCommentsTable.ForeignKeys[0].RefTable = ProjectsTable
+	ProjectCommentsTable.ForeignKeys[1].RefTable = CommentsTable
+	UserCommentsTable.ForeignKeys[0].RefTable = UsersTable
+	UserCommentsTable.ForeignKeys[1].RefTable = CommentsTable
 }
