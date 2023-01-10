@@ -1,0 +1,10 @@
+# dependencies
+ui/*/node_modules
+ui/*/.pnp
+ui/*/.pnp.js
+
+# testing
+ui/*/coverage
+
+# production
+ui/*/build
