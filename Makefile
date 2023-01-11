@@ -4,4 +4,4 @@ generate:
 	go generate ./...
 
 run:
-	go run . --debug 
+	go run . --debug --server 0.0.0.0:8083
