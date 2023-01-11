@@ -30,6 +30,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
 }
 
@@ -75,6 +76,13 @@ type ComplexityRoot struct {
 	EpicEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	Mutation struct {
+		CreateComment func(childComplexity int, input ent.CreateCommentInput) int
+		CreateEpic    func(childComplexity int, input ent.CreateEpicInput) int
+		CreateProject func(childComplexity int, input ent.CreateProjectInput) int
+		CreateUser    func(childComplexity int, input ent.CreateUserInput) int
 	}
 
 	PageInfo struct {
@@ -305,6 +313,54 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EpicEdge.Node(childComplexity), true
+
+	case "Mutation.createComment":
+		if e.complexity.Mutation.CreateComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateComment(childComplexity, args["input"].(ent.CreateCommentInput)), true
+
+	case "Mutation.createEpic":
+		if e.complexity.Mutation.CreateEpic == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createEpic_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateEpic(childComplexity, args["input"].(ent.CreateEpicInput)), true
+
+	case "Mutation.createProject":
+		if e.complexity.Mutation.CreateProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProject(childComplexity, args["input"].(ent.CreateProjectInput)), true
+
+	case "Mutation.createUser":
+		if e.complexity.Mutation.CreateUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(ent.CreateUserInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -620,6 +676,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -646,6 +717,10 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../comment.graphql", Input: `extend type Mutation {
+  createComment(input: CreateCommentInput!): Comment!
+}
+`, BuiltIn: false},
 	{Name: "../ent.graphql", Input: `directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
 type Comment implements Node {
@@ -1209,7 +1284,19 @@ input UserWhereInput {
   hasCommentsWith: [CommentWhereInput!]
 }
 `, BuiltIn: false},
+	{Name: "../epic.graphql", Input: `extend type Mutation {
+  createEpic(input: CreateEpicInput!): Epic!
+}
+`, BuiltIn: false},
+	{Name: "../project.graphql", Input: `extend type Mutation {
+  createProject(input: CreateProjectInput!): Project!
+}
+`, BuiltIn: false},
 	{Name: "../scalars.graphql", Input: `scalar Time
+`, BuiltIn: false},
+	{Name: "../user.graphql", Input: `extend type Mutation {
+  createUser(input: CreateUserInput!): User!
+}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)

@@ -6508,6 +6508,10 @@ func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet,
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNComment2githubᚗcomᚋjenmudᚋconsensusᚋentᚐComment(ctx context.Context, sel ast.SelectionSet, v ent.Comment) graphql.Marshaler {
+	return ec._Comment(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋentᚐComment(ctx context.Context, sel ast.SelectionSet, v *ent.Comment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6537,6 +6541,26 @@ func (ec *executionContext) unmarshalNCommentWhereInput2ᚖgithubᚗcomᚋjenmud
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateCommentInput2githubᚗcomᚋjenmudᚋconsensusᚋentᚐCreateCommentInput(ctx context.Context, v interface{}) (ent.CreateCommentInput, error) {
+	res, err := ec.unmarshalInputCreateCommentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateEpicInput2githubᚗcomᚋjenmudᚋconsensusᚋentᚐCreateEpicInput(ctx context.Context, v interface{}) (ent.CreateEpicInput, error) {
+	res, err := ec.unmarshalInputCreateEpicInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateProjectInput2githubᚗcomᚋjenmudᚋconsensusᚋentᚐCreateProjectInput(ctx context.Context, v interface{}) (ent.CreateProjectInput, error) {
+	res, err := ec.unmarshalInputCreateProjectInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋjenmudᚋconsensusᚋentᚐCreateUserInput(ctx context.Context, v interface{}) (ent.CreateUserInput, error) {
+	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋjenmudᚋconsensusᚋentᚐCursor(ctx context.Context, v interface{}) (ent.Cursor, error) {
 	var res ent.Cursor
 	err := res.UnmarshalGQL(v)
@@ -6545,6 +6569,10 @@ func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋjenmudᚋconsensus�
 
 func (ec *executionContext) marshalNCursor2githubᚗcomᚋjenmudᚋconsensusᚋentᚐCursor(ctx context.Context, sel ast.SelectionSet, v ent.Cursor) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNEpic2githubᚗcomᚋjenmudᚋconsensusᚋentᚐEpic(ctx context.Context, sel ast.SelectionSet, v ent.Epic) graphql.Marshaler {
+	return ec._Epic(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNEpic2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋentᚐEpic(ctx context.Context, sel ast.SelectionSet, v *ent.Epic) graphql.Marshaler {
@@ -6618,6 +6646,10 @@ func (ec *executionContext) marshalNPageInfo2githubᚗcomᚋjenmudᚋconsensus�
 	return ec._PageInfo(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNProject2githubᚗcomᚋjenmudᚋconsensusᚋentᚐProject(ctx context.Context, sel ast.SelectionSet, v ent.Project) graphql.Marshaler {
+	return ec._Project(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋentᚐProject(ctx context.Context, sel ast.SelectionSet, v *ent.Project) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6645,6 +6677,10 @@ func (ec *executionContext) marshalNProjectConnection2ᚖgithubᚗcomᚋjenmud�
 func (ec *executionContext) unmarshalNProjectWhereInput2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋentᚐProjectWhereInput(ctx context.Context, v interface{}) (*ent.ProjectWhereInput, error) {
 	res, err := ec.unmarshalInputProjectWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUser2githubᚗcomᚋjenmudᚋconsensusᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v ent.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v *ent.User) graphql.Marshaler {
