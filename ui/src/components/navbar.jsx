@@ -8,6 +8,7 @@ import PlumbingIcon from '@mui/icons-material/Plumbing';
 import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import React from "react";
+import DraggableCard from "./draggable";
 
 //const useStyles = makeStyles((theme) => ({
 //  root: {
@@ -23,7 +24,7 @@ const SideBar = () => {
 		<Box flex={1} p={2} sx={{ display: { xs: "none", sm: "block"}}}>
       <List>
         <ListItem disablePadding>
-          <ListItemButton component="a" href="/">
+          <ListItemButton component="a" href="/projects">
             <ListItemIcon><HomeIcon/></ListItemIcon>
             <ListItemText primary="Home"/>
           </ListItemButton>
@@ -59,7 +60,9 @@ const SideBar = () => {
 
 const RightBar = () => {
   return (
-    <Box bgcolor={"lightblue"} flex={4} p={2} sx={{ display: { xs: "none", sm: "block"}}}>rightbar</Box>
+    <Box bgcolor={"lightblue"} flex={4} p={2} sx={{ display: { xs: "none", sm: "block"}}}>
+      <DraggableCard/>
+    </Box>
   )
 }
 
