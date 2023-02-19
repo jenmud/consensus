@@ -32,6 +32,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -78,6 +79,18 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Event struct {
+		Fields func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Kind   func(childComplexity int) int
+		Op     func(childComplexity int) int
+	}
+
+	EventField struct {
+		NewValue func(childComplexity int) int
+		OldValue func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateComment func(childComplexity int, input ent.CreateCommentInput) int
 		CreateEpic    func(childComplexity int, input ent.CreateEpicInput) int
@@ -119,6 +132,10 @@ type ComplexityRoot struct {
 		Nodes    func(childComplexity int, ids []int) int
 		Projects func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.ProjectWhereInput) int
 		Users    func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.UserWhereInput) int
+	}
+
+	Subscription struct {
+		Events func(childComplexity int, topic *string) int
 	}
 
 	User struct {
@@ -313,6 +330,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EpicEdge.Node(childComplexity), true
+
+	case "Event.fields":
+		if e.complexity.Event.Fields == nil {
+			break
+		}
+
+		return e.complexity.Event.Fields(childComplexity), true
+
+	case "Event.id":
+		if e.complexity.Event.ID == nil {
+			break
+		}
+
+		return e.complexity.Event.ID(childComplexity), true
+
+	case "Event.kind":
+		if e.complexity.Event.Kind == nil {
+			break
+		}
+
+		return e.complexity.Event.Kind(childComplexity), true
+
+	case "Event.op":
+		if e.complexity.Event.Op == nil {
+			break
+		}
+
+		return e.complexity.Event.Op(childComplexity), true
+
+	case "EventField.newValue":
+		if e.complexity.EventField.NewValue == nil {
+			break
+		}
+
+		return e.complexity.EventField.NewValue(childComplexity), true
+
+	case "EventField.oldValue":
+		if e.complexity.EventField.OldValue == nil {
+			break
+		}
+
+		return e.complexity.EventField.OldValue(childComplexity), true
 
 	case "Mutation.createComment":
 		if e.complexity.Mutation.CreateComment == nil {
@@ -539,6 +598,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Users(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["where"].(*ent.UserWhereInput)), true
 
+	case "Subscription.events":
+		if e.complexity.Subscription.Events == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_events_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Events(childComplexity, args["topic"].(*string)), true
+
 	case "User.assignee":
 		if e.complexity.User.Assignee == nil {
 			break
@@ -685,6 +756,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -1293,6 +1381,22 @@ input UserWhereInput {
 }
 `, BuiltIn: false},
 	{Name: "../scalars.graphql", Input: `scalar Time
+`, BuiltIn: false},
+	{Name: "../subscriptions.graphql", Input: `type EventField {
+  oldValue: String
+  newValue: String!
+}
+
+type Event {
+  id: ID!
+  op: String!
+  kind: String!
+  fields: [EventField!]!
+}
+
+type Subscription {
+  events(topic: String): Event!
+}
 `, BuiltIn: false},
 	{Name: "../user.graphql", Input: `extend type Mutation {
   createUser(input: CreateUserInput!): User!

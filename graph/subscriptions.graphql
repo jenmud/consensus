@@ -1,0 +1,15 @@
+type EventField {
+  oldValue: String
+  newValue: String!
+}
+
+type Event {
+  id: ID!
+  op: String!
+  kind: String!
+  fields: [EventField!]!
+}
+
+type Subscription {
+  events(topic: String): Event!
+}

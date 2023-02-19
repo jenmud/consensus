@@ -117,6 +117,48 @@ func entrypoint(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	/*
+		client.Use(
+			func(next ent.Mutator) ent.Mutator {
+				return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+					start := time.Now()
+
+					defer func() {
+						log.Printf("Op=%s\tType=%s\tTime=%s\tConcreteType=%T\n", m.Op(), m.Type(), time.Since(start), m)
+					}()
+
+					v, err := next.Mutate(ctx, m)
+					if err != nil {
+						return v, err
+					}
+
+					switch t := v.(type) {
+					case *ent.Comment:
+						added := m.Fields()
+						id := t.ID
+						text := t.Text
+						for _, f := range added {
+							o, err := m.OldField(ctx, f)
+							if err != nil {
+								continue
+							}
+							log.Printf("Op=%s\tType=%s\tConcreteType=%T\tID:%d\tText:%s\tAddedFields: %v\tOld: %s\n", m.Op(), m.Type(), m, id, text, added, o)
+						}
+					case *ent.Epic:
+						added := m.Fields()
+						id := t.ID
+						name := t.Name
+						desp := t.Description
+						log.Printf("Op=%s\tType=%s\tConcreteType=%T\tID:%d\tText:%s\tDescription:%s\tAddedFields: %v\n", m.Op(), m.Type(), m, id, name, desp, added)
+					}
+
+					log.Printf("--> Op=%s\tType=%s\tTime=%s\tConcreteType=%T\n", m.Op(), m.Type(), time.Since(start), m)
+					return v, err
+				})
+			},
+		)
+	*/
+
 	addr := cmd.Flags().Lookup("server").Value.String()
 	return servePlayground(cmd.Context(), addr, client, debugging)
 }

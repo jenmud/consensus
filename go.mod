@@ -1,6 +1,6 @@
 module github.com/jenmud/consensus
 
-go 1.19
+go 1.20
 
 require (
 	entgo.io/contrib v0.3.4
