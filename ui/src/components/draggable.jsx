@@ -40,16 +40,13 @@ function Draggable(props) {
 export default function Swimlane() {
   return (
     <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
-      <Box sx={{ width: "100%", height: 600, backgroundColor: 'primary.dark', '&:hover': { backgroundColor: 'primary.main', opacity: [0.9, 0.8, 0.7] }}}>
-        swimlane 1
+      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#E5E8E8', '&:hover': { backgroundColor: '#C9E7E7', opacity: [0.9, 0.8, 0.7] }}}>
       </Box>
 
-      <Box sx={{ width: "100%", height: 600, backgroundColor: 'primary.dark', '&:hover': { backgroundColor: 'primary.main', opacity: [0.9, 0.8, 0.7] }}}>
-        swimlane 2
+      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#C1F5E9', '&:hover': { backgroundColor: '#3AF4C9', opacity: [0.9, 0.8, 0.7] }}}>
       </Box>
 
-      <Box sx={{ width: "100%", height: 600, backgroundColor: 'primary.dark', '&:hover': { backgroundColor: 'primary.main', opacity: [0.9, 0.8, 0.7] }}}>
-        swimlane 3
+      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#CBE1F7', '&:hover': { backgroundColor: '#3897F5', opacity: [0.9, 0.8, 0.7] }}}>
       </Box>
     </Stack>
   );
