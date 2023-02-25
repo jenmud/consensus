@@ -8,7 +8,7 @@ import PlumbingIcon from '@mui/icons-material/Plumbing';
 import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import React from "react";
-import DraggableCard from "./draggable";
+import Swimlane from "./draggable";
 
 //const useStyles = makeStyles((theme) => ({
 //  root: {
@@ -21,7 +21,7 @@ import DraggableCard from "./draggable";
 
 const SideBar = () => {
 	return (
-		<Box flex={1} p={2} sx={{ display: { xs: "none", sm: "block"}}}>
+		<Box flex={1} p={1} sx={{ display: { xs: "none", sm: "block"}}}>
       <List>
         <ListItem disablePadding>
           <ListItemButton component="a" href="/projects">
@@ -60,17 +60,12 @@ const SideBar = () => {
 
 const RightBar = () => {
   return (
-    <Box bgcolor={"lightblue"} flex={4} p={2} sx={{ display: { xs: "none", sm: "block"}}}>
-      <DraggableCard/>
+    <Box flex={7} p={2} sx={{ display: { xs: "none", sm: "block"}}}>
+      <Swimlane/>
     </Box>
   )
 }
 
-const Feed = () => {
-  return (
-    <Box bgcolor={"lightsalmon"} flex={2} p={2}>feed</Box>
-  )
-}
 
 const StyledToolbar = styled(Toolbar)({
   display:"flex",
@@ -98,7 +93,6 @@ export const ConcensusNavBar = () => {
     <Stack direction={"row"} spacing={2} justifyContent={"space-between"}>
       <SideBar/>
       <RightBar/>
-      <Feed/>
     </Stack>
     </Box>
   );

@@ -1,6 +1,6 @@
 
 import React, {useState} from 'react';
-import { Box } from "@mui/material";
+import { Box, Paper, Stack } from "@mui/material";
 import {DndContext} from '@dnd-kit/core';
 import {useDroppable} from '@dnd-kit/core';
 import {useDraggable} from '@dnd-kit/core';
@@ -37,32 +37,21 @@ function Draggable(props) {
   );
 }
 
-export default function DraggableCard() {
-  const [parent, setParent] = useState(null);
-  const draggable = (
-    <Box>
-      <Draggable id="draggable">
-        Go ahead, drag me.
-      </Draggable>
-    </Box>
-  );
-
+export default function Swimlane() {
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      {!parent ? draggable : null}
-      <Droppable id="droppable">
-        {parent === "droppable" ? draggable : 'Drop here'}
-      </Droppable>
-      <Droppable id="droppable2">
-        {parent === "droppable2" ? draggable : 'Drop here'}
-      </Droppable>
-      <Droppable id="droppable3">
-        {parent === "droppable3" ? draggable : 'Drop here'}
-      </Droppable>
-    </DndContext>
+    <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+      <Box sx={{ width: "100%", height: 600, backgroundColor: 'primary.dark', '&:hover': { backgroundColor: 'primary.main', opacity: [0.9, 0.8, 0.7] }}}>
+        swimlane 1
+      </Box>
+
+      <Box sx={{ width: "100%", height: 600, backgroundColor: 'primary.dark', '&:hover': { backgroundColor: 'primary.main', opacity: [0.9, 0.8, 0.7] }}}>
+        swimlane 2
+      </Box>
+
+      <Box sx={{ width: "100%", height: 600, backgroundColor: 'primary.dark', '&:hover': { backgroundColor: 'primary.main', opacity: [0.9, 0.8, 0.7] }}}>
+        swimlane 3
+      </Box>
+    </Stack>
   );
 
-  function handleDragEnd({over}) {
-    setParent(over ? over.id : null);
-  }
 }
