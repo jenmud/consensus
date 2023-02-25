@@ -11,14 +11,14 @@ import (
 	"sync"
 
 	"github.com/99designs/gqlgen/graphql"
-	main "github.com/jenmud/consensus"
+	"github.com/jenmud/consensus/graph/model"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
 
 type SubscriptionResolver interface {
-	Events(ctx context.Context, topic *string) (<-chan *main.Event, error)
+	Events(ctx context.Context, topic *string) (<-chan *model.Event, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -48,7 +48,7 @@ func (ec *executionContext) field_Subscription_events_args(ctx context.Context, 
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *main.Event) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -92,7 +92,7 @@ func (ec *executionContext) fieldContext_Event_id(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Event_op(ctx context.Context, field graphql.CollectedField, obj *main.Event) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_op(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_op(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -136,7 +136,7 @@ func (ec *executionContext) fieldContext_Event_op(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Event_kind(ctx context.Context, field graphql.CollectedField, obj *main.Event) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_kind(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_kind(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -180,7 +180,7 @@ func (ec *executionContext) fieldContext_Event_kind(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Event_fields(ctx context.Context, field graphql.CollectedField, obj *main.Event) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_fields(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_fields(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -206,9 +206,9 @@ func (ec *executionContext) _Event_fields(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*main.EventField)
+	res := resTmp.([]*model.EventField)
 	fc.Result = res
-	return ec.marshalNEventField2ᚕᚖgithubᚗcomᚋjenmudᚋconsensusᚐEventFieldᚄ(ctx, field.Selections, res)
+	return ec.marshalNEventField2ᚕᚖgithubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEventFieldᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_fields(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -230,7 +230,7 @@ func (ec *executionContext) fieldContext_Event_fields(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _EventField_oldValue(ctx context.Context, field graphql.CollectedField, obj *main.EventField) (ret graphql.Marshaler) {
+func (ec *executionContext) _EventField_oldValue(ctx context.Context, field graphql.CollectedField, obj *model.EventField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_EventField_oldValue(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -271,7 +271,7 @@ func (ec *executionContext) fieldContext_EventField_oldValue(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _EventField_newValue(ctx context.Context, field graphql.CollectedField, obj *main.EventField) (ret graphql.Marshaler) {
+func (ec *executionContext) _EventField_newValue(ctx context.Context, field graphql.CollectedField, obj *model.EventField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_EventField_newValue(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -343,7 +343,7 @@ func (ec *executionContext) _Subscription_events(ctx context.Context, field grap
 	}
 	return func(ctx context.Context) graphql.Marshaler {
 		select {
-		case res, ok := <-resTmp.(<-chan *main.Event):
+		case res, ok := <-resTmp.(<-chan *model.Event):
 			if !ok {
 				return nil
 			}
@@ -351,7 +351,7 @@ func (ec *executionContext) _Subscription_events(ctx context.Context, field grap
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNEvent2ᚖgithubᚗcomᚋjenmudᚋconsensusᚐEvent(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNEvent2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEvent(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -408,7 +408,7 @@ func (ec *executionContext) fieldContext_Subscription_events(ctx context.Context
 
 var eventImplementors = []string{"Event"}
 
-func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, obj *main.Event) graphql.Marshaler {
+func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, obj *model.Event) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, eventImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -457,7 +457,7 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 
 var eventFieldImplementors = []string{"EventField"}
 
-func (ec *executionContext) _EventField(ctx context.Context, sel ast.SelectionSet, obj *main.EventField) graphql.Marshaler {
+func (ec *executionContext) _EventField(ctx context.Context, sel ast.SelectionSet, obj *model.EventField) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, eventFieldImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -511,11 +511,11 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNEvent2githubᚗcomᚋjenmudᚋconsensusᚐEvent(ctx context.Context, sel ast.SelectionSet, v main.Event) graphql.Marshaler {
+func (ec *executionContext) marshalNEvent2githubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEvent(ctx context.Context, sel ast.SelectionSet, v model.Event) graphql.Marshaler {
 	return ec._Event(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋjenmudᚋconsensusᚐEvent(ctx context.Context, sel ast.SelectionSet, v *main.Event) graphql.Marshaler {
+func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEvent(ctx context.Context, sel ast.SelectionSet, v *model.Event) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -525,7 +525,7 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋjenmudᚋconsensus�
 	return ec._Event(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEventField2ᚕᚖgithubᚗcomᚋjenmudᚋconsensusᚐEventFieldᚄ(ctx context.Context, sel ast.SelectionSet, v []*main.EventField) graphql.Marshaler {
+func (ec *executionContext) marshalNEventField2ᚕᚖgithubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEventFieldᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EventField) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -549,7 +549,7 @@ func (ec *executionContext) marshalNEventField2ᚕᚖgithubᚗcomᚋjenmudᚋcon
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEventField2ᚖgithubᚗcomᚋjenmudᚋconsensusᚐEventField(ctx, sel, v[i])
+			ret[i] = ec.marshalNEventField2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEventField(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -569,7 +569,7 @@ func (ec *executionContext) marshalNEventField2ᚕᚖgithubᚗcomᚋjenmudᚋcon
 	return ret
 }
 
-func (ec *executionContext) marshalNEventField2ᚖgithubᚗcomᚋjenmudᚋconsensusᚐEventField(ctx context.Context, sel ast.SelectionSet, v *main.EventField) graphql.Marshaler {
+func (ec *executionContext) marshalNEventField2ᚖgithubᚗcomᚋjenmudᚋconsensusᚋgraphᚋmodelᚐEventField(ctx context.Context, sel ast.SelectionSet, v *model.EventField) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

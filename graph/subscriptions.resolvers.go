@@ -8,12 +8,12 @@ import (
 	"context"
 	"fmt"
 
-	main "github.com/jenmud/consensus"
 	"github.com/jenmud/consensus/graph/generated"
+	"github.com/jenmud/consensus/graph/model"
 )
 
 // Events is the resolver for the events field.
-func (r *subscriptionResolver) Events(ctx context.Context, topic *string) (<-chan *main.Event, error) {
+func (r *subscriptionResolver) Events(ctx context.Context, topic *string) (<-chan *model.Event, error) {
 	panic(fmt.Errorf("not implemented: Events - events"))
 }
 

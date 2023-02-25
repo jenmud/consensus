@@ -8,9 +8,9 @@ exec:
   package: generated
 
 
-# model:
-#   filename: graph/model/models_gen.go
-#   package: model
+model:
+  filename: graph/model/models_gen.go
+  package: model
 
 
 resolver:
