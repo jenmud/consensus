@@ -8,7 +8,7 @@ import PlumbingIcon from '@mui/icons-material/Plumbing';
 import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import React from "react";
-import Swimlane from "./draggable";
+import Swimlanes from "./draggable";
 
 //const useStyles = makeStyles((theme) => ({
 //  root: {
@@ -61,7 +61,7 @@ const SideBar = () => {
 const RightBar = () => {
   return (
     <Box flex={7} p={2} sx={{ display: { xs: "none", sm: "block"}}}>
-      <Swimlane/>
+      <Swimlanes/>
     </Box>
   )
 }

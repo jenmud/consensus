@@ -6,14 +6,10 @@ import {useDroppable} from '@dnd-kit/core';
 import {useDraggable} from '@dnd-kit/core';
 import {CSS} from '@dnd-kit/utilities';
 
-function Droppable(props) {
-  const {isOver, setNodeRef} = useDroppable({
-    id: props.id,
-  });
-  const style = {
-    opacity: isOver ? 1 : 0.5,
-  };
 
+function Droppable(props) {
+  const {isOver, setNodeRef} = useDroppable({id: 'droppable'});
+  const style = {color: isOver ? 'green' : undefined,};
   return (
     <div ref={setNodeRef} style={style}>
       {props.children}
@@ -22,35 +18,48 @@ function Droppable(props) {
 }
 
 function Draggable(props) {
-  const {attributes, listeners, setNodeRef, transform} = useDraggable({
-    id: props.id,
-  });
-  const style = {
-    // Outputs `translate3d(x, y, 0)`
-    transform: CSS.Translate.toString(transform),
-  };
-
+  const {attributes, listeners, setNodeRef, transform} = useDraggable({id: 'draggable'});
+  const style = transform ? {transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`} : undefined;
   return (
     <button ref={setNodeRef} style={style} {...listeners} {...attributes}>
       {props.children}
+      some text {props.name}
     </button>
   );
 }
 
-export default function Swimlane() {
+function Card(props) {
+  return (
+    <Box>
+          <Draggable name={props.name}/>
+          <Droppable name={props.name} />
+    </Box>
+  )
+}
+
+function Swimlane(props) {
+
+  return(
+      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#C1F5E9', '&:hover': { backgroundColor: '#3AF4C9', opacity: [0.9, 0.8, 0.7] }}}>
+        <Typography variant="h5" gutterBottom sx={{textAlign: 'center', textDecoration: "underline"}}>{props.kind}</Typography>
+        <DndContext>
+          <DndContext>
+            <Card name="A"/>
+          </DndContext>
+          <DndContext>
+            <Card name="B"/>
+          </DndContext>
+        </DndContext>
+      </Box>
+  )
+}
+
+export default function Swimlanes() {
   return (
     <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
-      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#E5E8E8', '&:hover': { backgroundColor: '#C9E7E7', opacity: [0.9, 0.8, 0.7] }}}>
-        <Typography variant="h4" gutterBottom sx={{textAlign: 'center'}}>To Do</Typography>
-      </Box>
-
-      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#C1F5E9', '&:hover': { backgroundColor: '#3AF4C9', opacity: [0.9, 0.8, 0.7] }}}>
-        <Typography variant="h4" gutterBottom sx={{textAlign: 'center'}}>In Progress</Typography>
-      </Box>
-
-      <Box sx={{ width: "100%", height: "90vh", backgroundColor: '#CBE1F7', '&:hover': { backgroundColor: '#3897F5', opacity: [0.9, 0.8, 0.7] }}}>
-        <Typography variant="h4" gutterBottom sx={{textAlign: 'center'}}>Done</Typography>
-      </Box>
+      <Swimlane kind="To Do"/>
+      <Swimlane kind="In Progress"/>
+      <Swimlane kind="Done"/>
     </Stack>
   );
 
