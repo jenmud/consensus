@@ -1,18 +1,24 @@
 
 import React, {useState} from 'react';
-import { Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import {DndContext} from '@dnd-kit/core';
 import {useDroppable} from '@dnd-kit/core';
 import {useDraggable} from '@dnd-kit/core';
+import {CSS} from '@dnd-kit/utilities';
 
 
 function Card(props) {
-  const { attributes, listeners, setNodeRef } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: props.id,
   })
 
+  const style = {
+    // Outputs `translate3d(x, y, 0)`
+    transform: CSS.Translate.toString(transform),
+  };
+
   return (
-    <Paper sx={{ margin: "6px" }} {...listeners} {...attributes} ref={setNodeRef}>
+    <Paper sx={{ margin: "6px" }} {...listeners} {...attributes} style={style} ref={setNodeRef}>
       {props.title}
     </Paper>
   )
@@ -21,13 +27,12 @@ function Card(props) {
 function Swimlane({ title, items }) {
   const { setNodeRef } = useDroppable({id: title})
   return (
-      <Stack direction="column" ref={setNodeRef} sx={{ width: "100%", height: "90vh", backgroundColor: '#C1F5E9', '&:hover': { backgroundColor: '#3AF4C9', opacity: [0.9, 0.8, 0.7] }}}>
+      <Box ref={setNodeRef} sx={{ width: "100%", height: "90vh", backgroundColor: '#C1F5E9', '&:hover': { backgroundColor: '#3AF4C9', opacity: [0.9, 0.8, 0.7] }}}>
         <Typography variant="h5" gutterBottom sx={{textAlign: 'center', textDecoration: "underline"}}>{title}</Typography>
-        {items.map(({ title: cardTitle }, key) => {
-          cardTitle = cardTitle ? cardTitle : "unset card title"
-          return <Card title={cardTitle} key={key} index={key} parent={title} />
-        })}
-    </Stack>
+        <Stack>
+          {items.map(({ title: cardTitle }, key) => <Card title={cardTitle ? cardTitle : "unset"} key={key} index={key} parent={title} />)}
+        </Stack>
+    </Box>
   )
 }
 
