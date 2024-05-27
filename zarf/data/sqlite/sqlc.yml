@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "../../../foundation/data/sqlite/query.sql"
+    schema: "../../../foundation/data/sqlite/schema.sql"
+    gen:
+      go:
+        package: "sqlite"
+        out: "../../../foundation/data/sqlite"

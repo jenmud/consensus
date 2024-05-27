@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
-    created_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
-    updated_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
+    created_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
+    updated_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
     email TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL
@@ -16,8 +16,8 @@ end;
                                          
 CREATE TABLE IF NOT EXISTS epic (        
     id INTEGER PRIMARY KEY,              
-    created_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
-    updated_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
+    created_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
+    updated_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
     name TEXT NOT NULL,                  
     description TEXT,                    
     user_id INTEGER NOT NULL,            
@@ -33,8 +33,8 @@ end;
                                          
 CREATE TABLE IF NOT EXISTS project (     
     id INTEGER PRIMARY KEY,              
-    created_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
-    updated_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
+    created_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
+    updated_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
     name TEXT NOT NULL,                  
     description TEXT,
     user_id INTEGER NOT NULL,
