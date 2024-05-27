@@ -4,7 +4,6 @@
 package main
 
 import (
-	_ "entgo.io/ent/cmd/ent"
-	_ "github.com/99designs/gqlgen"
-	_ "github.com/spf13/cobra"
+	_ "github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
