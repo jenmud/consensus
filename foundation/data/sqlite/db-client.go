@@ -50,12 +50,12 @@ func NewClient(dsn string) (*Queries, error) {
 		return nil, err
 	}
 
-	schema, err := Schema.ReadFile("schema.sql")
+	content, err := schema.ReadFile("schema.sql")
 	if err != nil {
 		return nil, err
 	}
 
-	if err := ApplySchema(db, string(schema)); err != nil {
+	if err := ApplySchema(db, string(content)); err != nil {
 		return nil, err
 	}
 
