@@ -22,8 +22,10 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,9 +35,9 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "concencus",
-	Short: "Concencus is a project management tool for teams.",
-	Long: `Concensus is a project management tool for teams that provides a platform for
+	Use:   "consensus",
+	Short: "Consensus is a project management tool for teams.",
+	Long: `Consensus is a project management tool for teams that provides a platform for
 collaboration and progress tracking. It is built around behavior-driven development
 (BDD) and is language agnostic, making it a great fit for teams of any size
 or composition.
@@ -48,7 +50,9 @@ or composition.
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer cancel()
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -61,7 +65,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.concensus.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.consensus.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -81,7 +85,7 @@ func initConfig() {
 		// Search config in home directory with name ".app" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".concencus")
+		viper.SetConfigName(".consensus")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

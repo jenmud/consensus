@@ -8,3 +8,4 @@ ui/coverage
 
 # production
 ui/build
+tmp

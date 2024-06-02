@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Consensus</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="text-center">
+        <h1 class="text-3xl font-bold underline m-4">Consensus</h1>
+        {{ block "body" . }}
+        <table class="mx-auto">
+            <th>
+                <tr>
+                    <td class="border px-4 py-2">Backlog</td>
+                    <td class="border px-4 py-2">In Progress</td>
+                    <td class="border px-4 py-2">Testing</td>
+                    <td class="border px-4 py-2">Review</td>
+                    <td class="border px-4 py-2">Done</td>
+                </tr>
+            </th>
+        </table>
+        {{ end }}
+    </div>
+</body>
+</html>
