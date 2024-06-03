@@ -1,38 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
     <title>Consensus</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/static/tailwind.config.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="/static/sorting.js"></script>
 </head>
-<body>
+
+<body class="dark:bg-gray-900 dark:text-white">
     <div class="text-center">
-        <h1 class="text-3xl font-bold underline m-4">Consensus</h1>
-        {{ block "body" . }}
-        <table class="mx-auto">
-            <th>
-                <tr>
-                    <td class="border px-4 py-2">Backlog</td>
-                    <td class="border px-4 py-2">In Progress</td>
-                    <td class="border px-4 py-2">Testing</td>
-                    <td class="border px-4 py-2">Review</td>
-                    <td class="border px-4 py-2">Done</td>
-                </tr>
-            </th>
-        </table>
-        {{ end }}
-        <form class="sortable" hx-post="/items" hx-trigger="end">
-            <div class="htmx-indicator">Updating...</div>
-            <div><input type='hidden' name='item' value='1'/>Item 1</div>
-            <div><input type='hidden' name='item' value='2'/>Item 2</div>
-            <div><input type='hidden' name='item' value='3'/>Item 3</div>
-            <div><input type='hidden' name='item' value='4'/>Item 4</div>
-            <div><input type='hidden' name='item' value='5'/>Item 5</div>
-          </form>
+        <h1 class="text-3xl font-bold underline m-4">{{ block "title" . }}Consensus{{ end }}</h1>
+        {{ block "body" . }}home page{{ end }}
     </div>
 </body>
+
 </html>

@@ -1,0 +1,4 @@
+<div class="htmx-indicator">Updating...</div>
+{{ range . }}
+    <div><input type='hidden' name='item' value={{.ID}} />{{.Title}}</div>
+{{ end }}

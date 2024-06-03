@@ -7,21 +7,193 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 //go:embed templates/*.tmpl
 var embedded embed.FS
 
+//go:embed static/*.js
+var static embed.FS
+
 func index(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func project(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/project.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	idString := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	project := Project{
+		ID:    id,
+		Title: "Project 1",
+	}
+
+	if err := tmpl.Execute(w, project); err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func projectItems(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("error", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err := tmpl.Execute(w, nil); err != nil {
+	items := []Card{
+		{
+			Title:   "Ticket 1",
+			Content: "Ticket 1 content",
+		},
+		{
+			Title:   "Ticket 2",
+			Content: "Ticket 2 content",
+		},
+		{
+			Title:   "Ticket 3",
+			Content: "Ticket 3 content",
+		},
+		{
+			Title:   "Ticket 4",
+			Content: "Ticket Project 4 content",
+		},
+	}
+
+	if err := tmpl.Execute(w, items); err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func projectItemsBacklog(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	items := []Card{
+		{
+			Title:   "Ticket 3",
+			Content: "Ticket 3 content",
+		},
+		{
+			Title:   "Ticket 4",
+			Content: "Ticket Project 4 content",
+		},
+	}
+
+	if err := tmpl.Execute(w, items); err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func projectItemsInProgress(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	items := []Card{
+		{
+			Title:   "Ticket 2",
+			Content: "Ticket 2 content",
+		},
+	}
+
+	if err := tmpl.Execute(w, items); err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func projectItemsCodeReview(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	items := []Card{
+		{
+			Title:   "Ticket 1",
+			Content: "Ticket 1 content",
+		},
+	}
+
+	if err := tmpl.Execute(w, items); err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func projectItemsTesting(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	items := []Card{}
+
+	if err := tmpl.Execute(w, items); err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func projectItemsDone(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	items := []Card{}
+
+	if err := tmpl.Execute(w, items); err != nil {
 		slog.Error("Failed to render index page", slog.String("error", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -29,11 +201,24 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 // registerRoutes registers the routes for the HTTP server.
-func registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", index)
+func registerRoutes(mux *chi.Mux) {
+	mux.Get("/", index)
 
-	staticFS := http.FileServer(http.FS(embedded))
-	mux.Handle("/static/", http.StripPrefix("/static/", staticFS))
+	mux.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
+		r.Get("/", project)
+		r.Route("/items", func(r chi.Router) {
+			r.Get("/", projectItems)
+			r.HandleFunc("/backlog", projectItemsBacklog)
+			r.HandleFunc("/inprogress", projectItemsInProgress)
+			r.HandleFunc("/codereview", projectItemsCodeReview)
+			r.HandleFunc("/testing", projectItemsTesting)
+			r.HandleFunc("/done", projectItemsDone)
+		})
+	})
+
+	staticFS := http.FS(static)
+	fileServer := http.FileServer(staticFS)
+	mux.Handle("/static/*", http.StripPrefix("/", fileServer))
 }
 
 // Run starts the HTTP server and serves the static files and the index page.
@@ -48,7 +233,7 @@ func ListenAndServe(ctx context.Context, addr string, logger *slog.Logger) error
 	}
 
 	slogger := logger.With(slog.String("address", addr))
-	mux := http.NewServeMux()
+	mux := chi.NewRouter()
 	registerRoutes(mux)
 
 	server := &http.Server{
