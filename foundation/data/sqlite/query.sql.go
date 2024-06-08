@@ -7,11 +7,127 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 )
 
+const createProject = `-- name: CreateProject :exec
+insert into project (name, description, user_id)
+values (?, ?, ?)
+`
+
+type CreateProjectParams struct {
+	Name        string
+	Description sql.NullString
+	UserID      int64
+}
+
+func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) error {
+	_, err := q.db.ExecContext(ctx, createProject, arg.Name, arg.Description, arg.UserID)
+	return err
+}
+
+const createUser = `-- name: CreateUser :exec
+insert into users (email, first_name, last_name, password, role)
+values (?, ?, ?, ?, ?)
+`
+
+type CreateUserParams struct {
+	Email     string
+	FirstName string
+	LastName  string
+	Password  string
+	Role      string
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.ExecContext(ctx, createUser,
+		arg.Email,
+		arg.FirstName,
+		arg.LastName,
+		arg.Password,
+		arg.Role,
+	)
+	return err
+}
+
+const getProject = `-- name: GetProject :one
+select id, created_at, updated_at, name, description, user_id from project
+where id = ? limit 1
+`
+
+func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProject, id)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Description,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getProjects = `-- name: GetProjects :many
+select id, created_at, updated_at, name, description, user_id from project
+order by (created_at, name) asc
+`
+
+func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, getProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Project
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Description,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUser = `-- name: GetUser :one
+select id, created_at, updated_at, email, first_name, last_name, password, role from users
+where id = ? limit 1
+`
+
+func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.Password,
+		&i.Role,
+	)
+	return i, err
+}
+
 const getUsers = `-- name: GetUsers :many
-select id, created_at, updated_at, email, first_name, last_name from users
-order by created_at asc
+select id, created_at, updated_at, email, first_name, last_name, password, role from users
+order by (created_at, role) asc
 `
 
 func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
@@ -30,6 +146,8 @@ func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
 			&i.Email,
 			&i.FirstName,
 			&i.LastName,
+			&i.Password,
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}
