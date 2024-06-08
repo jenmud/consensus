@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package service;
+option go_package = "github.com/jenmud/consensus/business/service";
+
+import "google/protobuf/timestamp.proto";
+
+// ProjectsReq is the request for fetching existing projects.
+message ProjectsReq{}
+
+// ProjectsResp is the response containing all the existing projects.
+message ProjectsResp{}
+
+// Consensus is the main consensus service.
+service Consensus {
+    // GetProjects returns all the existing projects.
+    rpc GetProjects(ProjectsReq) returns (ProjectsResp) {}
+}
