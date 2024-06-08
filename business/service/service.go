@@ -7,12 +7,13 @@ import (
 	status "google.golang.org/grpc/status"
 )
 
+// Consensus is the main consensus service.
 type Service struct {
 	UnimplementedConsensusServer
 }
 
 // New creates a new service.
-func New() *Service {
+func New(db) *Service {
 	return &Service{}
 }
 
