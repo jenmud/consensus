@@ -2,7 +2,9 @@ package service
 
 import (
 	context "context"
+	"database/sql"
 
+	client "github.com/jenmud/consensus/foundation/data/sqlite"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 )
@@ -10,11 +12,16 @@ import (
 // Consensus is the main consensus service.
 type Service struct {
 	UnimplementedConsensusServer
+	db     *sql.DB
+	client *client.Queries
 }
 
 // New creates a new service.
-func New(db) *Service {
-	return &Service{}
+func New(db *sql.DB) *Service {
+	return &Service{
+		db:     db, // we need the actual db because we need to create transactions.
+		client: client.New(db),
+	}
 }
 
 // CreateUser creates a new user.

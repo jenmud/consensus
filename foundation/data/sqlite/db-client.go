@@ -52,18 +52,3 @@ func NewDB(dsn string) (*sql.DB, error) {
 
 	return db, err
 }
-
-// NewClient creates a new client for interacting with a SQLite database.
-//
-// It takes a DSN (Data Source Name) string as a parameter, which specifies the
-// connection details for the database. The DSN should be in the format:
-// `<filename>|<connection_string>`.
-//
-// The function returns a pointer to a Queries struct and an error. The Queries
-// struct provides methods for executing SQL queries against the database. The
-// error is non-nil if there was an error opening the database connection or
-// applying the schema.
-func NewClient(dsn string) (*Queries, error) {
-
-	return New(db), nil
-}
