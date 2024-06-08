@@ -5,11 +5,16 @@ option go_package = "github.com/jenmud/consensus/business/service";
 
 import "google/protobuf/timestamp.proto";
 
+// Project represents a single project.
+message Project {}
+
 // ProjectsReq is the request for fetching existing projects.
 message ProjectsReq{}
 
 // ProjectsResp is the response containing all the existing projects.
-message ProjectsResp{}
+message ProjectsResp{
+    repeated Project projects = 1;
+}
 
 // Consensus is the main consensus service.
 service Consensus {
