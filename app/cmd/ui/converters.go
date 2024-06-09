@@ -8,6 +8,7 @@ func CoreProjectToProject(project *service.Project) Project {
 		ID:          project.GetId(),
 		Title:       project.GetName(),
 		Description: project.GetDescription(),
+		Owner:       CoreUserToUser(project.GetOwner()),
 	}
 }
 
@@ -18,4 +19,24 @@ func CoreProjectsToProjects(projects ...*service.Project) []Project {
 		projectsCore[i] = CoreProjectToProject(project)
 	}
 	return projectsCore
+}
+
+// CoreUserToUser converts a core user to a user.
+func CoreUserToUser(user *service.User) User {
+	return User{
+		ID:        user.GetId(),
+		FirstName: user.GetFirstName(),
+		LastName:  user.GetLastName(),
+		Email:     user.GetEmail(),
+		Role:      user.GetRole().String(),
+	}
+}
+
+// CoreUsersToUsers converts a one or more core users to one or more users.
+func CoreUsersToUsers(users ...*service.User) []User {
+	usersCore := make([]User, len(users))
+	for i, user := range users {
+		usersCore[i] = CoreUserToUser(user)
+	}
+	return usersCore
 }

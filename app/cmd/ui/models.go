@@ -15,4 +15,13 @@ type Project struct {
 	CodeReview  []Card
 	Testing     []Card
 	Done        []Card
+	Owner       User
+}
+
+type User struct {
+	ID        int64
+	FirstName string
+	LastName  string
+	Email     string
+	Role      string
 }

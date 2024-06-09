@@ -79,9 +79,64 @@ func projects(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// users renders the users page.
+func users(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/users.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
+	if !ok {
+		slog.Error("failed to get client from context")
+		http.Error(w, "failed to get consensus service client", http.StatusInternalServerError)
+		return
+	}
+
+	users, err := client.GetUsers(r.Context(), &service.GetUsersReq{})
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// If they are asking for JSON, then return the JSON response.
+	if r.Header.Get("Content-Type") == "application/json" {
+		w.Header().Set("Content-Type", "application/json")
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(users); err != nil {
+			slog.Error("Failed to encode project", slog.String("reason", err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	// Otherwise, render the HTML response.
+	if err := tmpl.Execute(w, CoreUsersToUsers(users.GetUsers()...)); err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
 	mux.Get("/", index)
+
+	mux.Route("/users", func(r chi.Router) {
+		r.Get("/", users)
+		r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
+			//r.Get("/", projectItems)
+			//r.HandleFunc("/backlog", projectItemsBacklog)
+			//r.HandleFunc("/inprogress", projectItemsInProgress)
+			//r.HandleFunc("/codereview", projectItemsCodeReview)
+			//r.HandleFunc("/testing", projectItemsTesting)
+			//r.HandleFunc("/done", projectItemsDone)
+		})
+	})
 
 	mux.Route("/projects", func(r chi.Router) {
 		r.Get("/", projects)
