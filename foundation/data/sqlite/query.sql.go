@@ -94,7 +94,7 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 const getProjects = `-- name: GetProjects :many
 select project.id, project.created_at, project.updated_at, project.name, project.description, project.user_id, users.id, users.created_at, users.updated_at, users.email, users.first_name, users.last_name, users.password, users.role from project
 join users on project.user_id = users.id
-order by (created_at, name) asc
+order by project.created_at asc, project.name asc
 `
 
 type GetProjectsRow struct {
@@ -163,7 +163,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 
 const getUsers = `-- name: GetUsers :many
 select id, created_at, updated_at, email, first_name, last_name, password, role from users
-order by (created_at, role) asc
+order by created_at asc, role asc
 `
 
 func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {

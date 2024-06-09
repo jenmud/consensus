@@ -7,11 +7,12 @@ type Card struct {
 }
 
 type Project struct {
-	ID         int64
-	Title      string
-	Backlog    []Card
-	InProgress []Card
-	CodeReview []Card
-	Testing    []Card
-	Done       []Card
+	ID          int64
+	Title       string
+	Description string
+	Backlog     []Card
+	InProgress  []Card
+	CodeReview  []Card
+	Testing     []Card
+	Done        []Card
 }

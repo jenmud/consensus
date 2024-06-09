@@ -3,6 +3,7 @@ package service
 import (
 	context "context"
 	"database/sql"
+	"log/slog"
 
 	client "github.com/jenmud/consensus/foundation/data/sqlite"
 	codes "google.golang.org/grpc/codes"
@@ -28,6 +29,7 @@ func New(db *sql.DB) *Service {
 func (s *Service) CreateUser(ctx context.Context, user *User) (*User, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
+		slog.Error("failed to begin transaction", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction: %v", err)
 	}
 
@@ -46,10 +48,12 @@ func (s *Service) CreateUser(ctx context.Context, user *User) (*User, error) {
 	)
 
 	if err != nil {
+		slog.Error("failed to create user", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
 	if err := tx.Commit(); err != nil {
+		slog.Error("failed to commit transaction", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %v", err)
 	}
 
@@ -60,6 +64,7 @@ func (s *Service) CreateUser(ctx context.Context, user *User) (*User, error) {
 func (s *Service) GetUsers(ctx context.Context, req *GetUsersReq) (*Users, error) {
 	users, err := s.client.GetUsers(ctx)
 	if err != nil {
+		slog.Error("failed to get users", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
 	}
 
@@ -70,6 +75,7 @@ func (s *Service) GetUsers(ctx context.Context, req *GetUsersReq) (*Users, error
 func (s *Service) CreateProject(ctx context.Context, project *Project) (*Project, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
+		slog.Error("failed to begin transaction", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction: %v", err)
 	}
 
@@ -89,10 +95,12 @@ func (s *Service) CreateProject(ctx context.Context, project *Project) (*Project
 	)
 
 	if err != nil {
+		slog.Error("failed to create project", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
 	}
 
 	if err := tx.Commit(); err != nil {
+		slog.Error("failed to commit transaction", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %v", err)
 	}
 
@@ -103,6 +111,7 @@ func (s *Service) CreateProject(ctx context.Context, project *Project) (*Project
 func (s *Service) GetProjects(ctx context.Context, req *ProjectsReq) (*Projects, error) {
 	rows, err := s.client.GetProjects(ctx)
 	if err != nil {
+		slog.Error("failed to get projects", slog.String("reason", err.Error()))
 		return nil, status.Errorf(codes.Internal, "failed to get projects: %v", err)
 	}
 

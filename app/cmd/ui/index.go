@@ -3,17 +3,15 @@ package ui
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"html/template"
 	"log/slog"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jenmud/consensus/business/service"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 //go:embed templates/*.tmpl
@@ -22,6 +20,7 @@ var embedded embed.FS
 //go:embed static/*.js
 var static embed.FS
 
+// index renders the index page.
 func index(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl")
 	if err != nil {
@@ -37,167 +36,44 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func project(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/project.tmpl")
+// projects renders the projects page.
+func projects(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/projects.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	idString := chi.URLParam(r, "id")
-	id, err := strconv.ParseInt(idString, 10, 64)
+	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
+	if !ok {
+		slog.Error("failed to get client from context")
+		http.Error(w, "failed to get consensus service client", http.StatusInternalServerError)
+		return
+	}
+
+	projects, err := client.GetProjects(r.Context(), &service.ProjectsReq{})
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	project := Project{
-		ID:    id,
-		Title: "Project 1",
+	// If they are asking for JSON, then return the JSON response.
+	if r.Header.Get("Content-Type") == "application/json" {
+		w.Header().Set("Content-Type", "application/json")
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(projects); err != nil {
+			slog.Error("Failed to encode project", slog.String("reason", err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
 	}
 
-	if err := tmpl.Execute(w, project); err != nil {
+	// Otherwise, render the HTML response.
+	if err := tmpl.Execute(w, CoreProjectsToProjects(projects.GetProjects()...)); err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func projectItems(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	items := []Card{
-		{
-			Title:   "Ticket 1",
-			Content: "Ticket 1 content",
-		},
-		{
-			Title:   "Ticket 2",
-			Content: "Ticket 2 content",
-		},
-		{
-			Title:   "Ticket 3",
-			Content: "Ticket 3 content",
-		},
-		{
-			Title:   "Ticket 4",
-			Content: "Ticket Project 4 content",
-		},
-	}
-
-	if err := tmpl.Execute(w, items); err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func projectItemsBacklog(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	items := []Card{
-		{
-			Title:   "Ticket 3",
-			Content: "Ticket 3 content",
-		},
-		{
-			Title:   "Ticket 4",
-			Content: "Ticket Project 4 content",
-		},
-	}
-
-	if err := tmpl.Execute(w, items); err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func projectItemsInProgress(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	items := []Card{
-		{
-			Title:   "Ticket 2",
-			Content: "Ticket 2 content",
-		},
-	}
-
-	if err := tmpl.Execute(w, items); err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func projectItemsCodeReview(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	items := []Card{
-		{
-			Title:   "Ticket 1",
-			Content: "Ticket 1 content",
-		},
-	}
-
-	if err := tmpl.Execute(w, items); err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func projectItemsTesting(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	items := []Card{}
-
-	if err := tmpl.Execute(w, items); err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func projectItemsDone(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/project-items.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	items := []Card{}
-
-	if err := tmpl.Execute(w, items); err != nil {
-		slog.Error("Failed to render index page", slog.String("error", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -207,15 +83,17 @@ func projectItemsDone(w http.ResponseWriter, r *http.Request) {
 func registerRoutes(mux *chi.Mux) {
 	mux.Get("/", index)
 
-	mux.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
-		r.Get("/", project)
-		r.Route("/items", func(r chi.Router) {
-			r.Get("/", projectItems)
-			r.HandleFunc("/backlog", projectItemsBacklog)
-			r.HandleFunc("/inprogress", projectItemsInProgress)
-			r.HandleFunc("/codereview", projectItemsCodeReview)
-			r.HandleFunc("/testing", projectItemsTesting)
-			r.HandleFunc("/done", projectItemsDone)
+	mux.Route("/projects", func(r chi.Router) {
+		r.Get("/", projects)
+		r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
+			r.Route("/items", func(r chi.Router) {
+				//r.Get("/", projectItems)
+				//r.HandleFunc("/backlog", projectItemsBacklog)
+				//r.HandleFunc("/inprogress", projectItemsInProgress)
+				//r.HandleFunc("/codereview", projectItemsCodeReview)
+				//r.HandleFunc("/testing", projectItemsTesting)
+				//r.HandleFunc("/done", projectItemsDone)
+			})
 		})
 	})
 
@@ -234,12 +112,11 @@ var serviceCtx = serviceCtxKey("service")
 // `host:port`.
 //
 // Returns an error if there was a problem starting the server.
-func ListenAndServe(ctx context.Context, addr, serviceAddr string, logger *slog.Logger) error {
+func ListenAndServe(ctx context.Context, addr string, client service.ConsensusClient, logger *slog.Logger) error {
 	if logger == nil {
 		logger = slog.Default()
 	}
 
-	slogger := logger.With(slog.String("address", addr), slog.String("service", serviceAddr))
 	mux := chi.NewRouter()
 	registerRoutes(mux)
 
@@ -250,35 +127,21 @@ func ListenAndServe(ctx context.Context, addr, serviceAddr string, logger *slog.
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		BaseContext: func(l net.Listener) context.Context {
-			serverCtx := context.WithoutCancel(ctx)
-
-			opts := []grpc.DialOption{
-				grpc.WithTransportCredentials(insecure.NewCredentials()),
-				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-					var d net.Dialer
-					return d.DialContext(ctx, "tcp", addr)
-				}),
-			}
-
-			conn, err := grpc.Dial(serviceAddr, opts...)
-			if err != nil {
-				slogger.Error("failed to start ui server", slog.String("reason", err.Error()))
-				panic(err)
-			}
-
-			client := service.NewConsensusClient(conn)
-			slogger.Info("starting ui server")
-			return context.WithValue(serverCtx, serviceCtx, client)
+			serviceCtx := context.WithValue(ctx, serviceCtx, client)
+			logger.Info("starting ui server")
+			return serviceCtx
 		},
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
-			slogger.Info("peer connection", slog.String("peer", c.RemoteAddr().String()))
+			logger.Info("peer connection", slog.String("peer", c.RemoteAddr().String()))
 			return ctx
 		},
 	}
 
+	logger.Info("starting http server and accepting client connections")
 	if err := server.ListenAndServe(); err != nil {
 		return err
 	}
 
+	logger.Info("shutting down http server")
 	return server.Shutdown(ctx)
 }

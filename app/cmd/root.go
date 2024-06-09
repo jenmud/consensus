@@ -31,6 +31,7 @@ import (
 
 	"github.com/jenmud/consensus/business/service"
 	"github.com/jenmud/consensus/foundation/data/sqlite"
+	"github.com/jenmud/consensus/foundation/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -62,10 +63,12 @@ or composition.
 
 		defer listener.Close()
 
-		logger := slog.With(
+		logger := logging.New(
 			slog.String("address", listener.Addr().String()),
 			slog.String("dsn", viper.GetString("dsn")),
 		)
+
+		slog.SetDefault(logger)
 
 		done := make(chan error, 1)
 
