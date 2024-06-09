@@ -16,12 +16,15 @@ var uiCmd = &cobra.Command{
 	Use:     "ui",
 	Aliases: []string{"dashboard", "UI"},
 	Short:   "UI for the Consensus. Provides a web-based dashboard for projects, features and tasks.",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		viper.BindPFlags(cmd.Flags())
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
 		err := make(chan error)
 		go func() {
-			err <- ui.ListenAndServe(ctx, viper.GetString("address"), nil)
+			err <- ui.ListenAndServe(ctx, viper.GetString("address"), viper.GetString("service"), nil)
 		}()
 
 		select {
@@ -36,5 +39,5 @@ var uiCmd = &cobra.Command{
 func init() {
 	webCmd.AddCommand(uiCmd)
 	uiCmd.Flags().StringP("address", "a", "0.0.0.0:8080", "Address is the address on which the server should listen for incoming requests.")
-	viper.BindPFlags(uiCmd.Flags())
+	uiCmd.Flags().StringP("service", "s", "0.0.0.0:8000", "Service is the consensus service address to connect to.")
 }

@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jenmud/consensus/business/service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 //go:embed templates/*.tmpl
@@ -221,18 +224,22 @@ func registerRoutes(mux *chi.Mux) {
 	mux.Handle("/static/*", http.StripPrefix("/", fileServer))
 }
 
+type serviceCtxKey string
+
+var serviceCtx = serviceCtxKey("service")
+
 // Run starts the HTTP server and serves the static files and the index page.
 // It takes an address as a parameter, which is the address on which the server
 // should listen for incoming requests. The address should be in the format
 // `host:port`.
 //
 // Returns an error if there was a problem starting the server.
-func ListenAndServe(ctx context.Context, addr string, logger *slog.Logger) error {
+func ListenAndServe(ctx context.Context, addr, serviceAddr string, logger *slog.Logger) error {
 	if logger == nil {
 		logger = slog.Default()
 	}
 
-	slogger := logger.With(slog.String("address", addr))
+	slogger := logger.With(slog.String("address", addr), slog.String("service", serviceAddr))
 	mux := chi.NewRouter()
 	registerRoutes(mux)
 
@@ -244,8 +251,24 @@ func ListenAndServe(ctx context.Context, addr string, logger *slog.Logger) error
 		WriteTimeout:      10 * time.Second,
 		BaseContext: func(l net.Listener) context.Context {
 			serverCtx := context.WithoutCancel(ctx)
-			slogger.Info("starting ui server", slog.String("address", l.Addr().String()))
-			return serverCtx
+
+			opts := []grpc.DialOption{
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+					var d net.Dialer
+					return d.DialContext(ctx, "tcp", addr)
+				}),
+			}
+
+			conn, err := grpc.Dial(serviceAddr, opts...)
+			if err != nil {
+				slogger.Error("failed to start ui server", slog.String("reason", err.Error()))
+				panic(err)
+			}
+
+			client := service.NewConsensusClient(conn)
+			slogger.Info("starting ui server")
+			return context.WithValue(serverCtx, serviceCtx, client)
 		},
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
 			slogger.Info("peer connection", slog.String("peer", c.RemoteAddr().String()))
