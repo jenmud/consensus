@@ -24,11 +24,16 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"net"
 	"os"
 	"os/signal"
 
+	"github.com/jenmud/consensus/business/service"
+	"github.com/jenmud/consensus/foundation/data/sqlite"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 var cfgFile string
@@ -42,9 +47,50 @@ collaboration and progress tracking. It is built around behavior-driven developm
 (BDD) and is language agnostic, making it a great fit for teams of any size
 or composition.
 	`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	PreRun: func(cmd *cobra.Command, args []string) {
+		viper.BindPFlags(cmd.Flags())
+		slog.Info("starting Consensus...")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+
+		listener, err := net.Listen("tcp", viper.GetString("address"))
+		if err != nil {
+			slog.Error("failed to start Consensus", slog.String("reason", err.Error()))
+			return
+		}
+
+		defer listener.Close()
+
+		logger := slog.With(
+			slog.String("address", listener.Addr().String()),
+			slog.String("dsn", viper.GetString("dsn")),
+		)
+
+		done := make(chan error, 1)
+
+		go func() {
+			db, err := sqlite.NewDB(viper.GetString("dsn"))
+			if err != nil {
+				done <- err
+				return
+			}
+
+			ss := service.New(db)
+			opts := []grpc.ServerOption{}
+			server := grpc.NewServer(opts...)
+			service.RegisterConsensusServer(server, ss)
+			logger.Info("started Consensus")
+			done <- server.Serve(listener)
+		}()
+
+		select {
+		case <-ctx.Done():
+			logger.Info("stopped Consensus", slog.String("reason", ctx.Err().Error()))
+		case e := <-done:
+			slog.Error("stopped Consensus", slog.String("reason", e.Error()))
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,15 +106,9 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.consensus.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	rootCmd.Flags().StringP("address", "a", ":8000", "Address to listen and accept connections on.")
+	rootCmd.Flags().StringP("dsn", "d", "file:consensus.sqlite", "Data source name for the database.")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 

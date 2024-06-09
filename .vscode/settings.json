@@ -1,4 +1,8 @@
 {
     "svn.ignoreMissingSvnWarning": true,
-    "crosshair.enabled": true
+    "crosshair.enabled": true,
+    "cSpell.words": [
+        "pflag",
+        "timestamppb"
+    ]
 }

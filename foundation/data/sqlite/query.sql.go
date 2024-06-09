@@ -10,9 +10,10 @@ import (
 	"database/sql"
 )
 
-const createProject = `-- name: CreateProject :exec
+const createProject = `-- name: CreateProject :one
 insert into project (name, description, user_id)
 values (?, ?, ?)
+RETURNING id, created_at, updated_at, name, description, user_id
 `
 
 type CreateProjectParams struct {
@@ -21,14 +22,24 @@ type CreateProjectParams struct {
 	UserID      int64
 }
 
-func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) error {
-	_, err := q.db.ExecContext(ctx, createProject, arg.Name, arg.Description, arg.UserID)
-	return err
+func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, createProject, arg.Name, arg.Description, arg.UserID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Description,
+		&i.UserID,
+	)
+	return i, err
 }
 
-const createUser = `-- name: CreateUser :exec
+const createUser = `-- name: CreateUser :one
 insert into users (email, first_name, last_name, password, role)
 values (?, ?, ?, ?, ?)
+RETURNING id, created_at, updated_at, email, first_name, last_name, password, role
 `
 
 type CreateUserParams struct {
@@ -39,15 +50,26 @@ type CreateUserParams struct {
 	Role      string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.Email,
 		arg.FirstName,
 		arg.LastName,
 		arg.Password,
 		arg.Role,
 	)
-	return err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.Password,
+		&i.Role,
+	)
+	return i, err
 }
 
 const getProject = `-- name: GetProject :one
@@ -70,26 +92,40 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 }
 
 const getProjects = `-- name: GetProjects :many
-select id, created_at, updated_at, name, description, user_id from project
+select project.id, project.created_at, project.updated_at, project.name, project.description, project.user_id, users.id, users.created_at, users.updated_at, users.email, users.first_name, users.last_name, users.password, users.role from project
+join users on project.user_id = users.id
 order by (created_at, name) asc
 `
 
-func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
+type GetProjectsRow struct {
+	Project Project
+	User    User
+}
+
+func (q *Queries) GetProjects(ctx context.Context) ([]GetProjectsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getProjects)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Project
+	var items []GetProjectsRow
 	for rows.Next() {
-		var i Project
+		var i GetProjectsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Name,
-			&i.Description,
-			&i.UserID,
+			&i.Project.ID,
+			&i.Project.CreatedAt,
+			&i.Project.UpdatedAt,
+			&i.Project.Name,
+			&i.Project.Description,
+			&i.Project.UserID,
+			&i.User.ID,
+			&i.User.CreatedAt,
+			&i.User.UpdatedAt,
+			&i.User.Email,
+			&i.User.FirstName,
+			&i.User.LastName,
+			&i.User.Password,
+			&i.User.Role,
 		); err != nil {
 			return nil, err
 		}

@@ -6,18 +6,21 @@ order by (created_at, role) asc;
 select * from users
 where id = ? limit 1;
 
--- name: CreateUser :exec
+-- name: CreateUser :one
 insert into users (email, first_name, last_name, password, role)
-values (?, ?, ?, ?, ?);
+values (?, ?, ?, ?, ?)
+RETURNING *;
 
 -- name: GetProjects :many
-select * from project
+select sqlc.embed(project), sqlc.embed(users) from project
+join users on project.user_id = users.id
 order by (created_at, name) asc;
 
 -- name: GetProject :one
 select * from project
 where id = ? limit 1;
 
--- name: CreateProject :exec
+-- name: CreateProject :one
 insert into project (name, description, user_id)
-values (?, ?, ?);
+values (?, ?, ?)
+RETURNING *;
