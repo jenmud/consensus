@@ -36,6 +36,22 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// login renders the login page.
+func login(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/login.tmpl")
+	if err != nil {
+		slog.Error("Failed to render login page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		slog.Error("Failed to render login page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 // projects renders the projects page.
 func projects(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(embedded, "templates/projects.tmpl")
@@ -125,6 +141,7 @@ func users(w http.ResponseWriter, r *http.Request) {
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
 	mux.Get("/", index)
+	mux.Get("/login", login)
 
 	mux.Route("/users", func(r chi.Router) {
 		r.Get("/", users)
