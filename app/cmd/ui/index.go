@@ -38,7 +38,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 // login renders the login page.
 func login(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/login.tmpl")
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
 	if err != nil {
 		slog.Error("Failed to render login page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)

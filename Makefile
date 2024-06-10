@@ -3,8 +3,8 @@ PROTOC_URL=https://github.com/protocolbuffers/protobuf/releases/download/v$(PROT
 PROTOC_PATH=~/.local/concencus/protoc
 GOROOT := $(shell go env GOROOT)
 GOPATH := $(shell go env GOPATH)
-PATH=$(GOROOT)/bin:$(GOPATH)/bin:$(PROTOC_PATH)/bin:$$PATH
-TEMP := $(shell /usr/bin/mktemp -d)
+PATH=$(GOROOT)/bin:$(GOPATH)/bin:$(PROTOC_PATH)/bin:/usr/bin:/usr/local/bin:$$PATH
+TEMP := $(shell /usr/bin/mktemp -d -u)
 
 all: generate
 
@@ -43,6 +43,10 @@ generate-proto:
 
 generate: generate-proto generate-sql
 
-run:
+run-ui:
 	PATH=$(PATH) /usr/bin/mkdir -p ./tmp
 	PATH=$(PATH) air -c ./zarf/air.toml
+
+run-service:
+	# needs cgo enabled because of sqlite3
+	PATH=$(PATH) CGO_ENABLED=1 go run ./app
