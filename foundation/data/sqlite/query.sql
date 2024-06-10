@@ -6,6 +6,10 @@ order by created_at asc, role asc;
 select * from users
 where id = ? limit 1;
 
+-- name: GetUserByEmail :one
+select * from users
+where email = ? limit 1;
+
 -- name: CreateUser :one
 insert into users (email, first_name, last_name, password, role)
 values (?, ?, ?, ?, ?)

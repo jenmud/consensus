@@ -26,6 +26,8 @@ type ConsensusClient interface {
 	CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
 	// GetUsers returns all the existing users.
 	GetUsers(ctx context.Context, in *GetUsersReq, opts ...grpc.CallOption) (*Users, error)
+	// AuthenticateUser authenticates a user.
+	AuthenticateUser(ctx context.Context, in *AuthReq, opts ...grpc.CallOption) (*User, error)
 	// CreateProject creates a new project.
 	CreateProject(ctx context.Context, in *Project, opts ...grpc.CallOption) (*Project, error)
 	// GetProjects returns all the existing projects.
@@ -58,6 +60,15 @@ func (c *consensusClient) GetUsers(ctx context.Context, in *GetUsersReq, opts ..
 	return out, nil
 }
 
+func (c *consensusClient) AuthenticateUser(ctx context.Context, in *AuthReq, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/service.Consensus/AuthenticateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *consensusClient) CreateProject(ctx context.Context, in *Project, opts ...grpc.CallOption) (*Project, error) {
 	out := new(Project)
 	err := c.cc.Invoke(ctx, "/service.Consensus/CreateProject", in, out, opts...)
@@ -84,6 +95,8 @@ type ConsensusServer interface {
 	CreateUser(context.Context, *User) (*User, error)
 	// GetUsers returns all the existing users.
 	GetUsers(context.Context, *GetUsersReq) (*Users, error)
+	// AuthenticateUser authenticates a user.
+	AuthenticateUser(context.Context, *AuthReq) (*User, error)
 	// CreateProject creates a new project.
 	CreateProject(context.Context, *Project) (*Project, error)
 	// GetProjects returns all the existing projects.
@@ -100,6 +113,9 @@ func (UnimplementedConsensusServer) CreateUser(context.Context, *User) (*User, e
 }
 func (UnimplementedConsensusServer) GetUsers(context.Context, *GetUsersReq) (*Users, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedConsensusServer) AuthenticateUser(context.Context, *AuthReq) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUser not implemented")
 }
 func (UnimplementedConsensusServer) CreateProject(context.Context, *Project) (*Project, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
@@ -156,6 +172,24 @@ func _Consensus_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consensus_AuthenticateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusServer).AuthenticateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.Consensus/AuthenticateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusServer).AuthenticateUser(ctx, req.(*AuthReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Consensus_CreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Project)
 	if err := dec(in); err != nil {
@@ -206,6 +240,10 @@ var Consensus_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsers",
 			Handler:    _Consensus_GetUsers_Handler,
+		},
+		{
+			MethodName: "AuthenticateUser",
+			Handler:    _Consensus_AuthenticateUser_Handler,
 		},
 		{
 			MethodName: "CreateProject",

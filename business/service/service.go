@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 
+	"github.com/jenmud/consensus/foundation/crypto"
 	client "github.com/jenmud/consensus/foundation/data/sqlite"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -25,6 +26,21 @@ func New(db *sql.DB) *Service {
 	}
 }
 
+// AuthenticateUser authenticates a user and returns the user if valid.
+func (s *Service) AuthenticateUser(ctx context.Context, req *AuthReq) (*User, error) {
+	user, err := s.client.GetUserByEmail(ctx, req.GetEmail())
+	if err != nil {
+		slog.Error("failed to get user", slog.String("reason", err.Error()))
+		return nil, status.Errorf(codes.NotFound, "failed to get user: %v", err)
+	}
+
+	if !crypto.CheckPasswordHash(req.GetPassword(), user.Password) {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials")
+	}
+
+	return DBUserToCoreUser(user), status.Errorf(codes.OK, "")
+}
+
 // CreateUser creates a new user.
 func (s *Service) CreateUser(ctx context.Context, user *User) (*User, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -35,6 +51,12 @@ func (s *Service) CreateUser(ctx context.Context, user *User) (*User, error) {
 
 	defer tx.Rollback()
 
+	// we do not want to store the password in plain text, so we hash it using the bcrypt algorithm.
+	hashedPassword, err := crypto.HashPassword(user.GetPassword())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err.Error())
+	}
+
 	c := s.client.WithTx(tx)
 	u, err := c.CreateUser(
 		ctx,
@@ -42,7 +64,7 @@ func (s *Service) CreateUser(ctx context.Context, user *User) (*User, error) {
 			Email:     user.GetEmail(),
 			FirstName: user.GetFirstName(),
 			LastName:  user.GetLastName(),
-			Password:  user.GetPassword(),
+			Password:  hashedPassword,
 			Role:      user.GetRole().String(),
 		},
 	)

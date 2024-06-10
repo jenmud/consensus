@@ -41,6 +41,15 @@ message User {
     Role role = 8;
 }
 
+// AuthReq is the request for authentication.
+message AuthReq {
+    // email is the email address of the user.
+    string email = 1;
+
+    // password is the password of the user.
+    string password = 2;
+}
+
 // GetUsersReq is the request for fetching existing users.
 message GetUsersReq {}
 
@@ -80,13 +89,16 @@ message Projects{
     repeated Project projects = 1;
 }
 
-// Consensus is the main consensus service.
+// Consensus is the main consensus service. NOTE: this service should be SSL enabled.
 service Consensus {
     // CreateUser creates a new user.
     rpc CreateUser(User) returns (User) {}
 
     // GetUsers returns all the existing users.
     rpc GetUsers(GetUsersReq) returns (Users) {}
+
+    // AuthenticateUser authenticates a user.
+    rpc AuthenticateUser(AuthReq) returns (User) {}
 
     // CreateProject creates a new project.
     rpc CreateProject(Project) returns (Project) {}

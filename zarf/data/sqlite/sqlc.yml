@@ -7,3 +7,6 @@ sql:
       go:
         package: "sqlite"
         out: "../../../foundation/data/sqlite"
+        emit_db_tags: true
+        emit_json_tags: true
+        json_tags_case_style: "snake"

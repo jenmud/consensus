@@ -127,23 +127,12 @@ func users(w http.ResponseWriter, r *http.Request) {
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
 	secret := crypto.Secret()
-
-	authServer := oauth.NewBearerServer(
-		secret,
-		time.Second*120,
-		&UserAuthVerifier{}, // TODO: this should be using the db to test the password
-		nil,
-	)
-
-	mux.Post("/token", authServer.UserCredentials)
-	mux.Post("/auth", authServer.ClientCredentials)
-
 	mux.Get("/", index)
 
 	// create a base router that will be used by all sub-routers which
 	// will redirect to the login page if the user is not authenticated.
 	mux.Route("/", func(r chi.Router) {
-		r.Use(oauth.Authorize(crypto.Secret(), nil))
+		r.Use(oauth.Authorize(secret, nil))
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", users)

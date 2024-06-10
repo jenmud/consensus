@@ -17,9 +17,9 @@ RETURNING id, created_at, updated_at, name, description, user_id
 `
 
 type CreateProjectParams struct {
-	Name        string
-	Description sql.NullString
-	UserID      int64
+	Name        string         `db:"name" json:"name"`
+	Description sql.NullString `db:"description" json:"description"`
+	UserID      int64          `db:"user_id" json:"user_id"`
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
@@ -43,11 +43,11 @@ RETURNING id, created_at, updated_at, email, first_name, last_name, password, ro
 `
 
 type CreateUserParams struct {
-	Email     string
-	FirstName string
-	LastName  string
-	Password  string
-	Role      string
+	Email     string `db:"email" json:"email"`
+	FirstName string `db:"first_name" json:"first_name"`
+	LastName  string `db:"last_name" json:"last_name"`
+	Password  string `db:"password" json:"password"`
+	Role      string `db:"role" json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -98,8 +98,8 @@ order by project.created_at asc, project.name asc
 `
 
 type GetProjectsRow struct {
-	Project Project
-	User    User
+	Project Project `db:"project" json:"project"`
+	User    User    `db:"user" json:"user"`
 }
 
 func (q *Queries) GetProjects(ctx context.Context) ([]GetProjectsRow, error) {
@@ -147,6 +147,27 @@ where id = ? limit 1
 
 func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.Password,
+		&i.Role,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+select id, created_at, updated_at, email, first_name, last_name, password, role from users
+where email = ? limit 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,

@@ -2,10 +2,10 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
     created_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
     updated_at DATETIME NOT NULL DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%S', 'NOW', 'UTC')),
-    email TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    password TEXT NOT NULL,
+    password TEXT NOT NULL, -- NOTE: we do not store the password in plain text, so hash it using the bcrypt algorithm.
     role TEXT CHECK (role IN ('admin', 'user')) NOT NULL DEFAULT 'user'
 );
 

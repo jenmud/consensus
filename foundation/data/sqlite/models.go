@@ -10,30 +10,30 @@ import (
 )
 
 type Epic struct {
-	ID          int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Name        string
-	Description sql.NullString
-	UserID      int64
+	ID          int64          `db:"id" json:"id"`
+	CreatedAt   time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at" json:"updated_at"`
+	Name        string         `db:"name" json:"name"`
+	Description sql.NullString `db:"description" json:"description"`
+	UserID      int64          `db:"user_id" json:"user_id"`
 }
 
 type Project struct {
-	ID          int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Name        string
-	Description sql.NullString
-	UserID      int64
+	ID          int64          `db:"id" json:"id"`
+	CreatedAt   time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at" json:"updated_at"`
+	Name        string         `db:"name" json:"name"`
+	Description sql.NullString `db:"description" json:"description"`
+	UserID      int64          `db:"user_id" json:"user_id"`
 }
 
 type User struct {
-	ID        int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Email     string
-	FirstName string
-	LastName  string
-	Password  string
-	Role      string
+	ID        int64     `db:"id" json:"id"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	Email     string    `db:"email" json:"email"`
+	FirstName string    `db:"first_name" json:"first_name"`
+	LastName  string    `db:"last_name" json:"last_name"`
+	Password  string    `db:"password" json:"password"`
+	Role      string    `db:"role" json:"role"`
 }
