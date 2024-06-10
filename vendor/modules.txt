@@ -4,6 +4,12 @@ github.com/fsnotify/fsnotify
 # github.com/go-chi/chi/v5 v5.0.12
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
+# github.com/go-chi/oauth v0.1.0
+## explicit; go 1.17
+github.com/go-chi/oauth
+# github.com/gofrs/uuid v4.0.0+incompatible
+## explicit
+github.com/gofrs/uuid
 # github.com/golang/protobuf v1.5.3
 ## explicit; go 1.9
 github.com/golang/protobuf/jsonpb

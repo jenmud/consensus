@@ -6,6 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/oauth v0.1.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
@@ -16,6 +17,7 @@ require (
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

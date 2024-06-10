@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/oauth"
 	"github.com/jenmud/consensus/business/service"
+	"github.com/jenmud/consensus/foundation/crypto"
 )
 
 //go:embed templates/*.tmpl
@@ -140,31 +142,38 @@ func users(w http.ResponseWriter, r *http.Request) {
 
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
-	mux.Get("/", index)
 	mux.Get("/login", login)
 
-	mux.Route("/users", func(r chi.Router) {
-		r.Get("/", users)
-		r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
-			//r.Get("/", projectItems)
-			//r.HandleFunc("/backlog", projectItemsBacklog)
-			//r.HandleFunc("/inprogress", projectItemsInProgress)
-			//r.HandleFunc("/codereview", projectItemsCodeReview)
-			//r.HandleFunc("/testing", projectItemsTesting)
-			//r.HandleFunc("/done", projectItemsDone)
-		})
-	})
+	// create a base router that will be used by all sub-routers which
+	// will redirect to the login page if the user is not authenticated.
+	mux.Route("/", func(r chi.Router) {
+		r.Use(oauth.Authorize(crypto.Secret(), nil))
 
-	mux.Route("/projects", func(r chi.Router) {
-		r.Get("/", projects)
-		r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
-			r.Route("/items", func(r chi.Router) {
+		r.Get("/", index)
+
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/", users)
+			r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
 				//r.Get("/", projectItems)
 				//r.HandleFunc("/backlog", projectItemsBacklog)
 				//r.HandleFunc("/inprogress", projectItemsInProgress)
 				//r.HandleFunc("/codereview", projectItemsCodeReview)
 				//r.HandleFunc("/testing", projectItemsTesting)
 				//r.HandleFunc("/done", projectItemsDone)
+			})
+		})
+
+		r.Route("/projects", func(r chi.Router) {
+			r.Get("/", projects)
+			r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
+				r.Route("/items", func(r chi.Router) {
+					//r.Get("/", projectItems)
+					//r.HandleFunc("/backlog", projectItemsBacklog)
+					//r.HandleFunc("/inprogress", projectItemsInProgress)
+					//r.HandleFunc("/codereview", projectItemsCodeReview)
+					//r.HandleFunc("/testing", projectItemsTesting)
+					//r.HandleFunc("/done", projectItemsDone)
+				})
 			})
 		})
 	})
