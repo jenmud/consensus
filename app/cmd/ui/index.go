@@ -24,31 +24,15 @@ var static embed.FS
 
 // index renders the index page.
 func index(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, nil); err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-// login renders the login page.
-func login(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
 	if err != nil {
-		slog.Error("Failed to render login page", slog.String("reason", err.Error()))
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := tmpl.Execute(w, nil); err != nil {
-		slog.Error("Failed to render login page", slog.String("reason", err.Error()))
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -142,14 +126,24 @@ func users(w http.ResponseWriter, r *http.Request) {
 
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
-	mux.Get("/login", login)
+	secret := crypto.Secret()
+
+	authServer := oauth.NewBearerServer(
+		secret,
+		time.Second*120,
+		&UserAuthVerifier{}, // TODO: this should be using the db to test the password
+		nil,
+	)
+
+	mux.Post("/token", authServer.UserCredentials)
+	mux.Post("/auth", authServer.ClientCredentials)
+
+	mux.Get("/", index)
 
 	// create a base router that will be used by all sub-routers which
 	// will redirect to the login page if the user is not authenticated.
 	mux.Route("/", func(r chi.Router) {
 		r.Use(oauth.Authorize(crypto.Secret(), nil))
-
-		r.Get("/", index)
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", users)
