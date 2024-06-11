@@ -11,9 +11,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/oauth"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/jenmud/consensus/business/service"
 	"github.com/jenmud/consensus/foundation/crypto"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
 //go:embed templates/*.tmpl
@@ -83,6 +84,20 @@ func projects(w http.ResponseWriter, r *http.Request) {
 
 // users renders the users page.
 func users(w http.ResponseWriter, r *http.Request) {
+	//token, claims, err := jwtauth.FromContext(r.Context())
+	//if err != nil {
+	//	slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+	//	return
+	//}
+
+	//jwtMap, err := token.AsMap(r.Context())
+	//if err != nil {
+	//	slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+	//	return
+	//}
+
+	//slog.Info(fmt.Sprintf("%#v", jwtMap))
+
 	tmpl, err := template.ParseFS(embedded, "templates/users.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
@@ -127,12 +142,23 @@ func users(w http.ResponseWriter, r *http.Request) {
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
 	secret := crypto.Secret()
+
+	jwtOpts := []jwt.ValidateOption{
+		jwt.WithAcceptableSkew(5 * time.Minute),
+	}
+
+	tokenAuth := jwtauth.New("HS256", []byte(secret), nil, jwtOpts...)
+
+	// PUBLIC ROUTES
 	mux.Get("/", index)
+
+	// PROTECTED ROUTES
 
 	// create a base router that will be used by all sub-routers which
 	// will redirect to the login page if the user is not authenticated.
 	mux.Route("/", func(r chi.Router) {
-		r.Use(oauth.Authorize(secret, nil))
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator(tokenAuth))
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", users)

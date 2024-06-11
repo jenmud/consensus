@@ -1,12 +1,29 @@
+# github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
+## explicit; go 1.17
+github.com/decred/dcrd/dcrec/secp256k1/v4
 # github.com/fsnotify/fsnotify v1.7.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
 # github.com/go-chi/chi/v5 v5.0.12
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
+# github.com/go-chi/jwtauth/v5 v5.3.1
+## explicit; go 1.18
+github.com/go-chi/jwtauth/v5
 # github.com/go-chi/oauth v0.1.0
 ## explicit; go 1.17
 github.com/go-chi/oauth
+# github.com/goccy/go-json v0.10.2
+## explicit; go 1.12
+github.com/goccy/go-json
+github.com/goccy/go-json/internal/decoder
+github.com/goccy/go-json/internal/encoder
+github.com/goccy/go-json/internal/encoder/vm
+github.com/goccy/go-json/internal/encoder/vm_color
+github.com/goccy/go-json/internal/encoder/vm_color_indent
+github.com/goccy/go-json/internal/encoder/vm_indent
+github.com/goccy/go-json/internal/errors
+github.com/goccy/go-json/internal/runtime
 # github.com/gofrs/uuid v4.0.0+incompatible
 ## explicit
 github.com/gofrs/uuid
@@ -33,6 +50,45 @@ github.com/hashicorp/hcl/json/token
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/lestrrat-go/blackmagic v1.0.2
+## explicit; go 1.16
+github.com/lestrrat-go/blackmagic
+# github.com/lestrrat-go/httpcc v1.0.1
+## explicit; go 1.16
+github.com/lestrrat-go/httpcc
+# github.com/lestrrat-go/httprc v1.0.4
+## explicit; go 1.17
+github.com/lestrrat-go/httprc
+# github.com/lestrrat-go/iter v1.0.2
+## explicit; go 1.13
+github.com/lestrrat-go/iter/arrayiter
+github.com/lestrrat-go/iter/mapiter
+# github.com/lestrrat-go/jwx/v2 v2.0.20
+## explicit; go 1.18
+github.com/lestrrat-go/jwx/v2
+github.com/lestrrat-go/jwx/v2/cert
+github.com/lestrrat-go/jwx/v2/internal/base64
+github.com/lestrrat-go/jwx/v2/internal/ecutil
+github.com/lestrrat-go/jwx/v2/internal/iter
+github.com/lestrrat-go/jwx/v2/internal/json
+github.com/lestrrat-go/jwx/v2/internal/keyconv
+github.com/lestrrat-go/jwx/v2/internal/pool
+github.com/lestrrat-go/jwx/v2/jwa
+github.com/lestrrat-go/jwx/v2/jwe
+github.com/lestrrat-go/jwx/v2/jwe/internal/aescbc
+github.com/lestrrat-go/jwx/v2/jwe/internal/cipher
+github.com/lestrrat-go/jwx/v2/jwe/internal/concatkdf
+github.com/lestrrat-go/jwx/v2/jwe/internal/content_crypt
+github.com/lestrrat-go/jwx/v2/jwe/internal/keyenc
+github.com/lestrrat-go/jwx/v2/jwe/internal/keygen
+github.com/lestrrat-go/jwx/v2/jwk
+github.com/lestrrat-go/jwx/v2/jws
+github.com/lestrrat-go/jwx/v2/jwt
+github.com/lestrrat-go/jwx/v2/jwt/internal/types
+github.com/lestrrat-go/jwx/v2/x25519
+# github.com/lestrrat-go/option v1.0.1
+## explicit; go 1.16
+github.com/lestrrat-go/option
 # github.com/magiconair/properties v1.8.7
 ## explicit; go 1.19
 github.com/magiconair/properties
@@ -55,6 +111,15 @@ github.com/sagikazarmark/locafero
 # github.com/sagikazarmark/slog-shim v0.1.0
 ## explicit; go 1.20
 github.com/sagikazarmark/slog-shim
+# github.com/segmentio/asm v1.2.0
+## explicit; go 1.18
+github.com/segmentio/asm/base64
+github.com/segmentio/asm/cpu
+github.com/segmentio/asm/cpu/arm
+github.com/segmentio/asm/cpu/arm64
+github.com/segmentio/asm/cpu/cpuid
+github.com/segmentio/asm/cpu/x86
+github.com/segmentio/asm/internal/unsafebytes
 # github.com/sourcegraph/conc v0.3.0
 ## explicit; go 1.19
 github.com/sourcegraph/conc
@@ -100,6 +165,10 @@ go.uber.org/multierr
 ## explicit; go 1.18
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/pbkdf2
 # golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 ## explicit; go 1.20
 golang.org/x/exp/constraints
@@ -117,6 +186,7 @@ golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 # golang.org/x/sys v0.21.0
 ## explicit; go 1.18
+golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.16.0

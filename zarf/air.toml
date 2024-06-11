@@ -3,7 +3,7 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = ["web", "ui"]
+  args_bin = ["web", "ui", "--address", "0.0.0.0:8081", "--service", "0.0.0.0:8001"]
   bin = "./tmp/main"
   cmd = "go build -tags='fts5' -o ./tmp/main ./app"
   delay = 1000

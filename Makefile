@@ -49,4 +49,4 @@ run-ui:
 
 run-service:
 	# needs cgo enabled because of sqlite3
-	PATH=$(PATH) CGO_ENABLED=1 go run ./app
+	PATH=$(PATH) CGO_ENABLED=1 go run ./app --address=0.0.0.0:8001
