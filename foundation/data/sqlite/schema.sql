@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     password TEXT NOT NULL, -- NOTE: we do not store the password in plain text, so hash it using the bcrypt algorithm.
-    role TEXT CHECK (role IN ('admin', 'user')) NOT NULL DEFAULT 'user'
+    role TEXT CHECK (role IN ('admin', 'user', 'ADMIN', 'USER')) NOT NULL DEFAULT 'USER'
 );
 
 CREATE TRIGGER IF NOT EXISTS update_user

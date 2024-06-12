@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -23,6 +24,23 @@ var embedded embed.FS
 //go:embed static/*.js
 var static embed.FS
 
+// secret is the shared secret for all tokens.
+var secret string
+var tokenAuth *jwtauth.JWTAuth
+
+func init() {
+	secret = crypto.Secret()
+	if s := os.Getenv("CONCENSUS_SECRET"); s != "" {
+		secret = s
+	}
+
+	jwtOpts := []jwt.ValidateOption{
+		jwt.WithAcceptableSkew(5 * time.Minute),
+	}
+
+	tokenAuth = jwtauth.New("HS256", []byte(secret), nil, jwtOpts...)
+}
+
 // index renders the index page.
 func index(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
@@ -37,6 +55,103 @@ func index(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// registerUser creates a new user.
+func registerUser(w http.ResponseWriter, r *http.Request) {
+	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
+	if !ok {
+		slog.Error("failed to get client from context")
+		http.Error(w, "failed to get consensus service client", http.StatusInternalServerError)
+		return
+	}
+
+	user := &service.User{
+		FirstName: r.FormValue("first_name"),
+		LastName:  r.FormValue("last_name"),
+		Email:     r.FormValue("email"),
+		Password:  r.FormValue("password"),
+	}
+
+	switch r.FormValue("role") {
+	case "admin":
+		user.Role = service.Role_ADMIN
+	case "user":
+		user.Role = service.Role_USER
+	}
+
+	_, err := client.CreateUser(r.Context(), user)
+
+	if err != nil {
+		slog.Error("Failed to authenticate user", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// login logs the account in and returns the JWT token.
+func login(w http.ResponseWriter, r *http.Request) {
+	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
+	if !ok {
+		slog.Error("failed to get client from context")
+		http.Error(w, "failed to get consensus service client", http.StatusInternalServerError)
+		return
+	}
+
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	// First we need to hash the password so we can compare it to the stored hash
+	hashedPassword, err := crypto.HashPassword(password)
+	if err != nil {
+		slog.Error("Failed to hash password", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("expected password", slog.String("expected-password", hashedPassword))
+
+	resp, err := client.AuthenticateUser(r.Context(), &service.AuthReq{
+		Email:    email,
+		Password: hashedPassword,
+	})
+
+	if err != nil {
+		slog.Error("Failed to authenticate user", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// If we get here we have a valid user, so generate the JWT token
+
+	claims := map[string]any{
+		"exp":        time.Now().Add(5 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+		"sub":        resp.Id,
+		"user_id":    resp.Id,
+		"first_name": resp.FirstName,
+		"last_name":  resp.LastName,
+		"email":      email,
+		"role":       resp.Role.String(),
+	}
+
+	_, token, err := tokenAuth.Encode(claims)
+	if err != nil {
+		slog.Error("Failed to generate JWT token", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt", // must be "jwt" to be searchable by the jwtauth.Varifier
+		Value:    token,
+		Expires:  time.Now().Add(7 * 24 * time.Hour), // 7 days
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.Redirect(w, r, "/users", http.StatusSeeOther) // TODO: testing with the /users endpoint
 }
 
 // projects renders the projects page.
@@ -84,20 +199,6 @@ func projects(w http.ResponseWriter, r *http.Request) {
 
 // users renders the users page.
 func users(w http.ResponseWriter, r *http.Request) {
-	//token, claims, err := jwtauth.FromContext(r.Context())
-	//if err != nil {
-	//	slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-	//	return
-	//}
-
-	//jwtMap, err := token.AsMap(r.Context())
-	//if err != nil {
-	//	slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-	//	return
-	//}
-
-	//slog.Info(fmt.Sprintf("%#v", jwtMap))
-
 	tmpl, err := template.ParseFS(embedded, "templates/users.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
@@ -139,18 +240,37 @@ func users(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func LoggedInRedirector(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, _, _ := jwtauth.FromContext(r.Context())
+
+		if token != nil && jwt.Validate(token) == nil {
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func UnloggedInRedirector(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, _, _ := jwtauth.FromContext(r.Context())
+
+		if token == nil || jwt.Validate(token) != nil {
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 // registerRoutes registers the routes for the HTTP server.
 func registerRoutes(mux *chi.Mux) {
-	secret := crypto.Secret()
-
-	jwtOpts := []jwt.ValidateOption{
-		jwt.WithAcceptableSkew(5 * time.Minute),
-	}
-
-	tokenAuth := jwtauth.New("HS256", []byte(secret), nil, jwtOpts...)
 
 	// PUBLIC ROUTES
 	mux.Get("/", index)
+	mux.Post("/login", login)
+	mux.Post("/register", registerUser)
 
 	// PROTECTED ROUTES
 
@@ -158,7 +278,8 @@ func registerRoutes(mux *chi.Mux) {
 	// will redirect to the login page if the user is not authenticated.
 	mux.Route("/", func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))
-		r.Use(jwtauth.Authenticator(tokenAuth))
+		r.Use(UnloggedInRedirector)
+		//r.Use(jwtauth.Authenticator(tokenAuth))
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", users)
