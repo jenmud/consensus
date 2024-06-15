@@ -57,6 +57,23 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// registerUserForm is the register user form.
+func registerUserForm(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/register-form.tmpl")
+	if err != nil {
+		slog.Error("Failed to render page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Otherwise, render the HTML response.
+	if err := tmpl.Execute(w, nil); err != nil {
+		slog.Error("Failed to render page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 // registerUser creates a new user.
 func registerUser(w http.ResponseWriter, r *http.Request) {
 	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
@@ -101,19 +118,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	// First we need to hash the password so we can compare it to the stored hash
-	hashedPassword, err := crypto.HashPassword(password)
-	if err != nil {
-		slog.Error("Failed to hash password", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	slog.Info("expected password", slog.String("expected-password", hashedPassword))
-
 	resp, err := client.AuthenticateUser(r.Context(), &service.AuthReq{
 		Email:    email,
-		Password: hashedPassword,
+		Password: password,
 	})
 
 	if err != nil {
@@ -270,6 +277,7 @@ func registerRoutes(mux *chi.Mux) {
 	// PUBLIC ROUTES
 	mux.Get("/", index)
 	mux.Post("/login", login)
+	mux.Get("/register", registerUserForm)
 	mux.Post("/register", registerUser)
 
 	// PROTECTED ROUTES

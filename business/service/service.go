@@ -34,7 +34,7 @@ func (s *Service) AuthenticateUser(ctx context.Context, req *AuthReq) (*User, er
 		return nil, status.Errorf(codes.NotFound, "failed to get user: %v", err)
 	}
 
-	if !crypto.CheckPasswordHash(req.GetPassword(), user.Password) {
+	if !crypto.CheckPasswordHash(user.Password, req.GetPassword()) {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials")
 	}
 

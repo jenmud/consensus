@@ -15,7 +15,9 @@
 
 <body class="dark:bg-gray-900 dark:text-white">
     {{ block "title" . }}{{ end }}
-    {{ block "body" . }}{{ end }}
+    <div id="body">
+        {{ block "body" . }}{{ end }}
+    </div>
 </body>
 
 </html>
