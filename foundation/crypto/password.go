@@ -18,12 +18,15 @@ func Secret() string {
 
 // HashPassword returns the bcrypt hash of the password
 func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if password == "" {
+		return "", bcrypt.ErrHashTooShort
+	}
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
 }
 
 // CheckPasswordHash compares a bcrypt hash to a password
-func CheckPasswordHash(password, hash string) bool {
+func CheckPasswordHash(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
