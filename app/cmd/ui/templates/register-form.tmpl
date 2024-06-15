@@ -6,26 +6,26 @@
             <p class="py-6">Register a new user</p>
         </div>
         <div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
-            <form class="card-body">
+            <form class="card-body" hx-post="/register" hx-target="#body" hx-on="htmx:responseError alert('whoops')">
                 <div class="form-control">
                     <input type="email" placeholder="email" class="input input-bordered" required />
                 </div>
                 <div class="form-control">
-                    <input id="register-user-password" type="password"
+                    <input id="password" type="password" onchange="validatePassword()"
                         title="Must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters"
                         pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" placeholder="password"
                         class="input input-bordered" required />
                 </div>
                 <div class="form-control">
-                    <input id="register-user-password-verify" type="password"
-                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" placeholder="validate password"
-                        class="input input-bordered" required />
+                    <input id="confirm-password" type="password" placeholder="confirm password"
+                        class="input input-bordered" onkeyup="validatePassword()" required />
                 </div>
                 <div class="flex gap-2 self-end mt-4">
                     <div class="form-control">
-                            <button class="btn btn-primary btn-sm">Create</button>
+                        <button class="btn btn-primary btn-sm">Create</button>
                     </div>
-                    <button class="btn btn-error btn-sm" hx-get="/login" hx-target="#body" hx-swap="outerHTML" >Cancel</button>
+                    <button class="btn btn-error btn-sm" hx-get="/login" hx-target="#body"
+                        hx-swap="outerHTML">Cancel</button>
                 </div>
             </form>
         </div>
