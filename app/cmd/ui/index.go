@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"embed"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net"
@@ -73,8 +74,8 @@ func registerUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// registerUser creates a new user.
-func registerUser(w http.ResponseWriter, r *http.Request) {
+// registerUserPOST creates a new user.
+func registerUserPOST(w http.ResponseWriter, r *http.Request) {
 	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
 	if !ok {
 		slog.Error("failed to get client from context")
@@ -116,7 +117,23 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
 }
 
-func loginForm(w http.ResponseWriter, r *http.Request) {
+// login logs the account in and returns the JWT token.
+func login(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
+	if err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func loginFormPOST(w http.ResponseWriter, r *http.Request) {
 	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
 	if !ok {
 		slog.Error("failed to get client from context")
@@ -134,7 +151,7 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		slog.Error("Failed to authenticate user", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -154,9 +171,11 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	_, token, err := tokenAuth.Encode(claims)
 	if err != nil {
 		slog.Error("Failed to generate JWT token", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt", // must be "jwt" to be searchable by the jwtauth.Varifier
@@ -168,22 +187,6 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
-}
-
-// login logs the account in and returns the JWT token.
-func login(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, nil); err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 }
 
 func LoggedInRedirector(next http.Handler) http.Handler {
@@ -200,7 +203,12 @@ func LoggedInRedirector(next http.Handler) http.Handler {
 
 func UnloggedInRedirector(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, _, _ := jwtauth.FromContext(r.Context())
+		token, _, err := jwtauth.FromContext(r.Context())
+		if err != nil {
+			slog.Error("failed to get token from context", slog.String("reason", err.Error()))
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
 
 		if token == nil || jwt.Validate(token) != nil {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -215,9 +223,9 @@ func registerRoutes(mux *chi.Mux) {
 
 	// PUBLIC ROUTES
 	mux.Get("/login", login)
-	mux.Post("/login", loginForm)
+	mux.Post("/login", loginFormPOST)
 	mux.Get("/register", registerUserForm)
-	mux.Post("/register", registerUser)
+	mux.Post("/register", registerUserPOST)
 
 	// PROTECTED ROUTES
 	mux.Route("/", func(r chi.Router) {
