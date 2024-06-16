@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"embed"
-	"encoding/json"
 	"html/template"
 	"log/slog"
 	"net"
@@ -43,7 +42,7 @@ func init() {
 
 // index renders the index page.
 func index(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -83,6 +82,15 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	password := r.FormValue("password")
+	confirm := r.FormValue("confirm_password")
+
+	if password != confirm {
+		slog.Error("failed to confirm the password")
+		http.Error(w, "failed to confirm the password", http.StatusUnauthorized)
+		return
+	}
+
 	user := &service.User{
 		FirstName: r.FormValue("first_name"),
 		LastName:  r.FormValue("last_name"),
@@ -104,10 +112,11 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
 }
 
-// login logs the account in and returns the JWT token.
-func login(w http.ResponseWriter, r *http.Request) {
+func loginForm(w http.ResponseWriter, r *http.Request) {
 	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
 	if !ok {
 		slog.Error("failed to get client from context")
@@ -158,89 +167,19 @@ func login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	http.Redirect(w, r, "/users", http.StatusSeeOther) // TODO: testing with the /users endpoint
+	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
 }
 
-// projects renders the projects page.
-func projects(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/projects.tmpl")
+// login logs the account in and returns the JWT token.
+func login(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/login.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
-	if !ok {
-		slog.Error("failed to get client from context")
-		http.Error(w, "failed to get consensus service client", http.StatusInternalServerError)
-		return
-	}
-
-	projects, err := client.GetProjects(r.Context(), &service.ProjectsReq{})
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// If they are asking for JSON, then return the JSON response.
-	if r.Header.Get("Content-Type") == "application/json" {
-		w.Header().Set("Content-Type", "application/json")
-		encoder := json.NewEncoder(w)
-		if err := encoder.Encode(projects); err != nil {
-			slog.Error("Failed to encode project", slog.String("reason", err.Error()))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		return
-	}
-
-	// Otherwise, render the HTML response.
-	if err := tmpl.Execute(w, CoreProjectsToProjects(projects.GetProjects()...)); err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-// users renders the users page.
-func users(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/users.tmpl")
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	client, ok := r.Context().Value(serviceCtx).(service.ConsensusClient)
-	if !ok {
-		slog.Error("failed to get client from context")
-		http.Error(w, "failed to get consensus service client", http.StatusInternalServerError)
-		return
-	}
-
-	users, err := client.GetUsers(r.Context(), &service.GetUsersReq{})
-	if err != nil {
-		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// If they are asking for JSON, then return the JSON response.
-	if r.Header.Get("Content-Type") == "application/json" {
-		w.Header().Set("Content-Type", "application/json")
-		encoder := json.NewEncoder(w)
-		if err := encoder.Encode(users); err != nil {
-			slog.Error("Failed to encode project", slog.String("reason", err.Error()))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		return
-	}
-
-	// Otherwise, render the HTML response.
-	if err := tmpl.Execute(w, CoreUsersToUsers(users.GetUsers()...)); err != nil {
+	if err := tmpl.Execute(w, nil); err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -264,7 +203,7 @@ func UnloggedInRedirector(next http.Handler) http.Handler {
 		token, _, _ := jwtauth.FromContext(r.Context())
 
 		if token == nil || jwt.Validate(token) != nil {
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		}
 
 		next.ServeHTTP(w, r)
@@ -275,45 +214,16 @@ func UnloggedInRedirector(next http.Handler) http.Handler {
 func registerRoutes(mux *chi.Mux) {
 
 	// PUBLIC ROUTES
-	mux.Get("/", index)
-	mux.Post("/login", login)
+	mux.Get("/login", login)
+	mux.Post("/login", loginForm)
 	mux.Get("/register", registerUserForm)
 	mux.Post("/register", registerUser)
 
 	// PROTECTED ROUTES
-
-	// create a base router that will be used by all sub-routers which
-	// will redirect to the login page if the user is not authenticated.
 	mux.Route("/", func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))
 		r.Use(UnloggedInRedirector)
-		//r.Use(jwtauth.Authenticator(tokenAuth))
-
-		r.Route("/users", func(r chi.Router) {
-			r.Get("/", users)
-			r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
-				//r.Get("/", projectItems)
-				//r.HandleFunc("/backlog", projectItemsBacklog)
-				//r.HandleFunc("/inprogress", projectItemsInProgress)
-				//r.HandleFunc("/codereview", projectItemsCodeReview)
-				//r.HandleFunc("/testing", projectItemsTesting)
-				//r.HandleFunc("/done", projectItemsDone)
-			})
-		})
-
-		r.Route("/projects", func(r chi.Router) {
-			r.Get("/", projects)
-			r.Route("/projects/{id:^[1-9]+}", func(r chi.Router) {
-				r.Route("/items", func(r chi.Router) {
-					//r.Get("/", projectItems)
-					//r.HandleFunc("/backlog", projectItemsBacklog)
-					//r.HandleFunc("/inprogress", projectItemsInProgress)
-					//r.HandleFunc("/codereview", projectItemsCodeReview)
-					//r.HandleFunc("/testing", projectItemsTesting)
-					//r.HandleFunc("/done", projectItemsDone)
-				})
-			})
-		})
+		r.Get("/", index)
 	})
 
 	staticFS := http.FS(static)
