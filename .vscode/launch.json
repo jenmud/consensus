@@ -10,7 +10,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"buildFlags": ["-tags", "fts5"],
-			"args": ["web", "ui", "--address", "0.0.0.0:8081", "--service", "0.0.0.0:8001"],
+			"args": ["web", "ui", "--address", "0.0.0.0:8090", "--service", "0.0.0.0:8001"],
 			"program": "${workspaceFolder}/app/main.go"
 		},
 		{

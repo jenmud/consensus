@@ -43,7 +43,7 @@ func init() {
 
 // index renders the index page.
 func index(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl")
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/nav.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -114,7 +114,7 @@ func registerUserPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 // login logs the account in and returns the JWT token.
@@ -186,7 +186,15 @@ func loginFormPOST(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func logoutFormPOST(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "jwt", // must be "jwt" to be searchable by the jwtauth.Varifier
+		Expires: time.Now(),
+	})
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func LoggedInRedirector(next http.Handler) http.Handler {
@@ -206,12 +214,12 @@ func UnloggedInRedirector(next http.Handler) http.Handler {
 		token, _, err := jwtauth.FromContext(r.Context())
 		if err != nil {
 			slog.Error("failed to get token from context", slog.String("reason", err.Error()))
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 
 		if token == nil || jwt.Validate(token) != nil {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 		}
 
 		next.ServeHTTP(w, r)
@@ -226,6 +234,7 @@ func registerRoutes(mux *chi.Mux) {
 	mux.Post("/login", loginFormPOST)
 	mux.Get("/register", registerUserForm)
 	mux.Post("/register", registerUserPOST)
+	mux.Post("/logout", logoutFormPOST)
 
 	// PROTECTED ROUTES
 	mux.Route("/", func(r chi.Router) {

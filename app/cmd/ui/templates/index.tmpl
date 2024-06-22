@@ -17,6 +17,9 @@
 </head>
 
 <body class="dark:bg-gray-900 dark:text-white">
+    <header>
+        {{ block "nav" . }}{{ end }}
+    </header>
     {{ block "title" . }}{{ end }}
     <div id="body">
         {{ block "body" . }}{{ end }}
