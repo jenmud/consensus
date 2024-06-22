@@ -21,12 +21,13 @@
         {{ block "nav" . }}{{ end }}
     </header>
     {{ block "title" . }}{{ end }}
-    <div id="body">
+    <div id="body" class="flex items-center justify-center min-h-screen">
         {{ block "body" . }}
-            <div class="hero min-h-screen bg-base-200">
-                <div class="hero-content text-center">
-                    <div class="skeleton w-32 h-32"></div>
-                </div>
+            <div class="p-4 w-full max-w-screen-xl h-full flex flex-col justify-center items-center bg-slate-500 shadow-lg rounded-lg">
+                <div class="w-10 h-32 shadow rounded bg-gray-600"></div>
+                <div class="w-10 h-32 shadow rounded bg-green-600"></div>
+                <div class="w-10 h-32 shadow rounded bg-orange-600"></div>
+                <div class="w-10 h-32 shadow rounded bg-blue-600"></div>
             </div>
         {{ end }}
     </div>
