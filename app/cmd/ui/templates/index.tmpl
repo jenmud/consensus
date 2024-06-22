@@ -22,7 +22,13 @@
     </header>
     {{ block "title" . }}{{ end }}
     <div id="body">
-        {{ block "body" . }}{{ end }}
+        {{ block "body" . }}
+            <div class="hero min-h-screen bg-base-200">
+                <div class="hero-content text-center">
+                    <div class="skeleton w-32 h-32"></div>
+                </div>
+            </div>
+        {{ end }}
     </div>
 </body>
 
