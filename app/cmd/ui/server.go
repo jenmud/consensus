@@ -50,7 +50,9 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.Execute(w, nil); err != nil {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+
+	if err := tmpl.Execute(w, claims); err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
