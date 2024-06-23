@@ -43,7 +43,7 @@ func init() {
 
 // index renders the index page.
 func index(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/nav.tmpl")
+	tmpl, err := template.ParseFS(embedded, "templates/index.tmpl", "templates/nav.tmpl", "templates/swimlanes.tmpl")
 	if err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -238,12 +238,13 @@ func registerRoutes(mux *chi.Mux) {
 	mux.Post("/register", registerUserPOST)
 	mux.Post("/logout", logoutFormPOST)
 
+	mux.Get("/", index) // TOOD: Remove me
 	// PROTECTED ROUTES
-	mux.Route("/", func(r chi.Router) {
-		r.Use(jwtauth.Verifier(tokenAuth))
-		r.Use(UnloggedInRedirector)
-		r.Get("/", index)
-	})
+	//mux.Route("/", func(r chi.Router) {
+	//	r.Use(jwtauth.Verifier(tokenAuth))
+	//	r.Use(UnloggedInRedirector)
+	//	r.Get("/", index)
+	//})
 
 	staticFS := http.FS(static)
 	fileServer := http.FileServer(staticFS)
