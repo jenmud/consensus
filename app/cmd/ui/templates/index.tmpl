@@ -16,12 +16,12 @@
     <!-- <script src="/static/toast.js"></script> -->
 </head>
 
-<body class="dark:bg-gray-900 dark:text-white">
+<body class="dark:bg-gray-900 dark:text-white h-screen overflow-hidden">
     <header>
         {{ block "nav" . }}{{ end }}
     </header>
     {{ block "title" . }}{{ end }}
-    <div id="body" class="flex items-center justify-center min-h-screen">
+    <div id="body" class="pt-16 pb-10 h-full m-6">
         {{ block "body" . }}
         {{ end }}
     </div>

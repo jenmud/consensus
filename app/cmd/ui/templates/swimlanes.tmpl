@@ -1,29 +1,53 @@
 {{ define "body" }}
-<div
-    class="p-4 w-full max-w-screen-xl h-full flex flex-col justify-center items-center bg-slate-500 shadow-lg rounded-lg">
-    <div class="flex-1 flex flex-col md:flex-row gap-2 w-full h-full">
-        <div class="flex-1 h-full flex justify-center items-center shadow rounded bg-gray-600">
-            <div class="columns-auto w-full grid grid-cols-subgrid gap-2 p-2">
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">todo 1</div>
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">todo2</div>
+<div class="flex gap-4 px-4 h-full">
+    <!-- To Do Lane -->
+    <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
+        <h2 class="text-xl text-red-400 font-semibold mb-4">To Do</h2>
+        <div class="space-y-4">
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 1</p>
+            </div>
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 2</p>
             </div>
         </div>
-        <div class="flex-1 h-full flex justify-center items-center shadow rounded bg-green-600">
-            <div class="columns-auto w-full grid grid-cols-subgrid gap-2 p-2">
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">in-progress 1</div>
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">in-progress 2</div>
+    </div>
+
+    <!-- In Progress Lane -->
+    <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
+        <h2 class="text-xl text-green-400 font-semibold mb-4">In Progress</h2>
+        <div class="space-y-4">
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 1</p>
+            </div>
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 2</p>
             </div>
         </div>
-        <div class="flex-1 h-full flex justify-center items-center shadow rounded bg-orange-600">
-            <div class="columns-auto w-full grid grid-cols-subgrid gap-2 p-2">
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">testing 1</div>
+    </div>
+
+    <!-- Testing Lane -->
+    <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
+        <h2 class="text-xl text-orange-400 font-semibold mb-4">Testing</h2>
+        <div class="space-y-4">
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 1</p>
             </div>
         </div>
-        <div class="flex-1 h-full flex justify-center items-center shadow rounded bg-blue-600">
-            <div class="columns-auto w-full grid grid-cols-subgrid gap-2 p-2">
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">done 1</div>
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">done 2</div>
-                <div class="shadow-inner hover:shadow-md text-black hover:bg-gray-200 bg-gray-400 hover:rounded-lg px-2 py-1">done 3</div>
+    </div>
+
+    <!-- Done Lane -->
+    <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Done</h2>
+        <div class="space-y-4">
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 1</p>
+            </div>
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 2</p>
+            </div>
+            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                <p>Task 3</p>
             </div>
         </div>
     </div>
