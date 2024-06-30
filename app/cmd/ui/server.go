@@ -238,13 +238,18 @@ func registerRoutes(mux *chi.Mux) {
 	mux.Post("/register", registerUserPOST)
 	mux.Post("/logout", logoutFormPOST)
 
-	mux.Get("/", index) // TOOD: Remove me
+	//mux.Get("/", index) // TOOD: Remove me
 	// PROTECTED ROUTES
-	//mux.Route("/", func(r chi.Router) {
-	//	r.Use(jwtauth.Verifier(tokenAuth))
-	//	r.Use(UnloggedInRedirector)
-	//	r.Get("/", index)
-	//})
+	mux.Route("/", func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(UnloggedInRedirector)
+		r.Get("/", index)
+		// TODO: complete the following
+		// r.Get("/projects", projects)                  // all projects view
+		// r.Post("/projects", projectsPOST)             // add or remove a project
+		// r.Get("/projects/{id}/swimlanes", swimlanes)  // project swimlanes
+		// r.Post("/projects/{id}/backlog", backlogPOST) // add or remove task to the backlog
+	})
 
 	staticFS := http.FS(static)
 	fileServer := http.FileServer(staticFS)

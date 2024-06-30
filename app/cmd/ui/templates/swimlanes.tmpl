@@ -2,14 +2,13 @@
 <div class="flex gap-4 px-4 h-full">
     <!-- To Do Lane -->
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
-        <h2 class="text-xl text-red-400 font-semibold mb-4">To Do</h2>
+        <h2 class="text-xl text-red-400 font-semibold mb-4">Backlog</h2>
         <div class="space-y-4">
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 1</p>
-            </div>
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 2</p>
-            </div>
+            {{ range .Backlog }}
+                <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                    <p>{{ .Name }}</p>
+                </div>
+            {{ end }}
         </div>
     </div>
 
@@ -17,12 +16,23 @@
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl text-green-400 font-semibold mb-4">In Progress</h2>
         <div class="space-y-4">
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 1</p>
-            </div>
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 2</p>
-            </div>
+            {{ range .InProgress }}
+                <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                    <p>{{ .Name }}</p>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Code Review -->
+    <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
+        <h2 class="text-xl text-yellow-600 font-semibold mb-4">Code Review</h2>
+        <div class="space-y-4">
+            {{ range .CodeReview }}
+                <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                    <p>{{ .Name }}</p>
+                </div>
+            {{ end }}
         </div>
     </div>
 
@@ -30,9 +40,11 @@
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl text-orange-400 font-semibold mb-4">Testing</h2>
         <div class="space-y-4">
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 1</p>
-            </div>
+            {{ range .Testing }}
+                <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                    <p>{{ .Name }}</p>
+                </div>
+            {{ end }}
         </div>
     </div>
 
@@ -40,15 +52,11 @@
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl font-semibold mb-4">Done</h2>
         <div class="space-y-4">
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 1</p>
-            </div>
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 2</p>
-            </div>
-            <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                <p>Task 3</p>
-            </div>
+            {{ range .Done }}
+                <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
+                    <p>{{ .Name }}</p>
+                </div>
+            {{ end }}
         </div>
     </div>
 </div>
