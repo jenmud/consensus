@@ -6,7 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/go-chi/oauth v0.1.0
+	github.com/lestrrat-go/jwx/v2 v2.0.20
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
@@ -22,7 +22,6 @@ require (
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.0.20 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 )
@@ -30,8 +29,8 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-chi/jwtauth/v5 v5.3.1
-	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

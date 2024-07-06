@@ -13,10 +13,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/google/uuid"
 	"github.com/jenmud/consensus/business/service"
 	"github.com/jenmud/consensus/foundation/crypto"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
+
+// defaultJWTExpiry is the default expiry time for JWT tokens.
+const defaultJWTExpiry = 15 * time.Minute
 
 //go:embed templates/*.tmpl
 var embedded embed.FS
@@ -50,9 +54,20 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, claims, _ := jwtauth.FromContext(r.Context())
+	// If we get here we have a valid user, so generate the JWT token
+	token, err := JWTFromCtx(r.Context())
+	if err != nil {
+		slog.Error("Failed to generate JWT", slog.String("reason", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	if err := tmpl.Execute(w, claims); err != nil {
+	payload := Payload{
+		Project: Project{},
+		JWT:     token,
+	}
+
+	if err := tmpl.Execute(w, payload); err != nil {
 		slog.Error("Failed to render index page", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -158,30 +173,33 @@ func loginFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If we get here we have a valid user, so generate the JWT token
-
-	claims := map[string]any{
-		"exp":        time.Now().Add(5 * time.Minute).Unix(),
-		"iat":        time.Now().Unix(),
-		"sub":        resp.Id,
-		"user_id":    resp.Id,
-		"first_name": resp.FirstName,
-		"last_name":  resp.LastName,
-		"email":      email,
-		"role":       resp.Role.String(),
+	token := JWT{
+		ID:        uuid.NewString(),
+		Audience:  []string{"Consensus"},
+		Subject:   resp.Id,
+		IssuedAt:  time.Now(),
+		ExpiresAt: time.Now().Add(defaultJWTExpiry),
+		User: User{
+			ID:        resp.Id,
+			FirstName: resp.FirstName,
+			LastName:  resp.LastName,
+			Email:     email,
+			Role:      resp.Role.String(),
+		},
 	}
 
-	_, token, err := tokenAuth.Encode(claims)
+	_, tokenAuth, err := tokenAuth.Encode(token.AsMap())
 	if err != nil {
 		slog.Error("Failed to generate JWT token", slog.String("reason", err.Error()))
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", tokenAuth))
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt", // must be "jwt" to be searchable by the jwtauth.Varifier
-		Value:    token,
+		Value:    tokenAuth,
 		Expires:  time.Now().Add(7 * 24 * time.Hour), // 7 days
 		Secure:   false,
 		HttpOnly: true,

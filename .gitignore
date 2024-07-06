@@ -10,4 +10,4 @@ ui/coverage
 ui/build
 tmp
 *.sqlite
-app/__debug_bin1689615761
+*__debug*
