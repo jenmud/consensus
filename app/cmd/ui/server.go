@@ -63,8 +63,29 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload := Payload{
-		Project: Project{},
-		JWT:     token,
+		Project: Project{
+			ID:          1,
+			Title:       "SomeFakeProject",
+			Description: "Some fake project for UI testing",
+			Backlog: []Card{
+				{
+					ID:      1,
+					Title:   "SomeFakeCard",
+					Content: "Some fake card for UI testing",
+				},
+				{
+					ID:      2,
+					Title:   "SomeFakeCard-2",
+					Content: "Second fake card for UI testing",
+				},
+			},
+			InProgress: []Card{},
+			CodeReview: []Card{},
+			Testing:    []Card{},
+			Done:       []Card{},
+			Owner:      User{},
+		},
+		JWT: token,
 	}
 
 	if err := tmpl.Execute(w, payload); err != nil {
