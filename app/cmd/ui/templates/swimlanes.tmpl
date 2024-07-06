@@ -26,7 +26,7 @@
         <div class="space-y-4">
             {{ range .Project.Backlog }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                    <p>{{ .Name }}</p>
+                    <p>{{ .Title }}</p>
                 </div>
             {{ end }}
         </div>
@@ -38,7 +38,7 @@
         <div class="space-y-4">
             {{ range .Project.InProgress }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                    <p>{{ .Name }}</p>
+                    <p>{{ .Title }}</p>
                 </div>
             {{ end }}
         </div>
@@ -50,7 +50,7 @@
         <div class="space-y-4">
             {{ range .Project.CodeReview }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                    <p>{{ .Name }}</p>
+                    <p>{{ .Title }}</p>
                 </div>
             {{ end }}
         </div>
@@ -62,7 +62,7 @@
         <div class="space-y-4">
             {{ range .Project.Testing }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                    <p>{{ .Name }}</p>
+                    <p>{{ .Title }}</p>
                 </div>
             {{ end }}
         </div>
@@ -74,7 +74,7 @@
         <div class="space-y-4">
             {{ range .Project.Done }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
-                    <p>{{ .Name }}</p>
+                    <p>{{ .Title }}</p>
                 </div>
             {{ end }}
         </div>
