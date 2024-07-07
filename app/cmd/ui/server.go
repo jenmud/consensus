@@ -79,11 +79,44 @@ func index(w http.ResponseWriter, r *http.Request) {
 					Content: "Second fake card for UI testing",
 				},
 			},
-			InProgress: []Card{},
+			InProgress: []Card{
+				{
+					ID:      3,
+					Title:   "SomeFakeCard-3",
+					Content: "Third fake card for UI testing",
+				},
+			},
 			CodeReview: []Card{},
-			Testing:    []Card{},
-			Done:       []Card{},
-			Owner:      User{},
+			Testing: []Card{
+				{
+					ID:      4,
+					Title:   "SomeFakeCard-4",
+					Content: "Fourth fake card for UI testing",
+				},
+				{
+					ID:      5,
+					Title:   "SomeFakeCard-5",
+					Content: "Fifth fake card for UI testing",
+				},
+			},
+			Done: []Card{
+				{
+					ID:      6,
+					Title:   "SomeFakeCard-6",
+					Content: "Sixth fake card for UI testing",
+				},
+				{
+					ID:      7,
+					Title:   "SomeFakeCard-7",
+					Content: "Seventh fake card for UI testing",
+				},
+				{
+					ID:      8,
+					Title:   "SomeFakeCard-8",
+					Content: "Eighth fake card for UI testing",
+				},
+			},
+			Owner: User{},
 		},
 		JWT: token,
 	}

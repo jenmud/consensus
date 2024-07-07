@@ -23,7 +23,7 @@
     <!-- To Do Lane -->
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl text-red-400 font-semibold mb-4">Backlog <span class="badge badge-error">{{len .Project.Backlog}}</span></h2>
-        <div class="space-y-4">
+        <div id="todo-lane" class="space-y-4">
             {{ range .Project.Backlog }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
                     <p>{{ .Title }}</p>
@@ -35,7 +35,7 @@
     <!-- In Progress Lane -->
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl text-green-400 font-semibold mb-4">In Progress <span class="badge badge-success">{{len .Project.InProgress}}</span></h2>
-        <div class="space-y-4">
+        <div id="inProgress-lane" class="space-y-4">
             {{ range .Project.InProgress }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
                     <p>{{ .Title }}</p>
@@ -47,7 +47,7 @@
     <!-- Code Review -->
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl text-yellow-600 font-semibold mb-4">Code Review <span class="badge badge-warning">{{len .Project.CodeReview}}</span></h2>
-        <div class="space-y-4">
+        <div id="codeReview-lane" class="space-y-4">
             {{ range .Project.CodeReview }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
                     <p>{{ .Title }}</p>
@@ -59,7 +59,7 @@
     <!-- Testing Lane -->
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl text-orange-400 font-semibold mb-4">Testing <span class="badge badge-warning">{{len .Project.Testing}}</span></h2>
-        <div class="space-y-4">
+        <div id="testing-lane" class="space-y-4">
             {{ range .Project.Testing }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
                     <p>{{ .Title }}</p>
@@ -71,7 +71,7 @@
     <!-- Done Lane -->
     <div class="flex-1 bg-gray-600 p-4 rounded-lg shadow-lg">
         <h2 class="text-xl font-semibold mb-4">Done <span class="badge badge-neutral">{{len .Project.Done}}</span></h2>
-        <div class="space-y-4">
+        <div id="done-lane" class="space-y-4">
             {{ range .Project.Done }}
                 <div class="bg-[#719EC8] hover:bg-[#a3c9ec] hover:text-black p-4 rounded-lg shadow-md">
                     <p>{{ .Title }}</p>
@@ -80,5 +80,44 @@
         </div>
     </div>
 </div>
+
+<script>
+    var todo = document.getElementById("todo-lane");
+    var inProgress = document.getElementById("inProgress-lane");
+    var codeReview = document.getElementById("codeReview-lane");
+    var testing = document.getElementById("testing-lane");
+    var done = document.getElementById("done-lane");
+
+    new Sortable(todo, {
+        group: 'swimlanes',
+        animation: 150,
+        ghostClass: 'blue-background-class',
+    });
+
+    new Sortable(inProgress, {
+        group: 'swimlanes',
+        animation: 150,
+        ghostClass: 'blue-background-class',
+    });
+
+    new Sortable(codeReview, {
+        group: 'swimlanes',
+        animation: 150,
+        ghostClass: 'blue-background-class',
+    });
+
+    new Sortable(testing, {
+        group: 'swimlanes',
+        animation: 150,
+        ghostClass: 'blue-background-class',
+    });
+
+    new Sortable(done, {
+        group: 'swimlanes',
+        animation: 150,
+        ghostClass: 'blue-background-class',
+    });
+
+</script>
 
 {{ end }}
