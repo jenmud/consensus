@@ -3,16 +3,30 @@
 <!-- 
     Show the action buttons above the swimlanes
  -->
-<div class="flex bg-gray-600 mx-4 p-4 mb-2 rounded-lg">
-    <button class="btn btn-sm btn-outline btn-success" onclick="new_task.showModal()">create task</button>
+ <div class="flex bg-gray-600 mx-4 p-4 mb-2 rounded-lg">
+    <button class="btn btn-sm btn-outline btn-success" onclick="document.getElementById('new_task').showModal()">Create Scenario</button>
     <dialog id="new_task" class="modal">
-    <div class="modal-box">
-        <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-        </form>
-        <h3 class="text-lg font-bold">Hello!</h3>
-        <p class="py-4">Press ESC key or click on ✕ button to close</p>
-    </div>
+        <div class="modal-box w-11/12 max-w-5xl">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                <div class="mb-4">
+                    <label class="font-bold text-gray-300 block mb-1">Given</label>
+                    <textarea class="textarea textarea-bordered w-full text-gray-400" rows="1" placeholder="a customer previously bought a black sweater from me"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="font-bold text-gray-300 block mb-1">And</label>
+                    <textarea class="textarea textarea-bordered w-full text-gray-400" rows="1" placeholder="a customer previously bought a black sweater from me">I have three black sweaters in inventory,</textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="font-bold text-gray-300 block mb-1">When</label>
+                    <textarea class="textarea textarea-bordered w-full text-gray-400" rows="1" placeholder="a customer previously bought a black sweater from me">they return the black sweater for a refund,</textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="font-bold text-gray-300 block mb-1">Then</label>
+                    <textarea class="textarea textarea-bordered w-full text-gray-400" rows="1" placeholder="a customer previously bought a black sweater from me">I should have four black sweaters in inventory.</textarea>
+                </div>
+            </form>
+        </div>
     </dialog>
 </div>
 
