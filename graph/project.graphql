@@ -1,3 +1,0 @@
-extend type Mutation {
-  createProject(input: CreateProjectInput!): Project!
-}

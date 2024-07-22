@@ -1,3 +1,0 @@
-extend type Mutation {
-  createEpic(input: CreateEpicInput!): Epic!
-}
