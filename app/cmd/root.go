@@ -50,7 +50,17 @@ or composition.
 	`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		viper.BindPFlags(cmd.Flags())
-		slog.Info("starting Consensus...")
+
+		loggingOptions := logging.Options{
+			Subject:  "consensus.logs",
+			NATSAddr: viper.GetString("nats"),
+		}
+
+		natLogHandler := logging.NewNATSHandler(cmd.Context(), loggingOptions)
+		logger := slog.New(natLogHandler).WithGroup("consensus")
+
+		slog.SetDefault(logger)
+		logger.Info("starting Consensus...")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -63,12 +73,13 @@ or composition.
 
 		defer listener.Close()
 
-		logger := logging.New(
-			slog.String("address", listener.Addr().String()),
-			slog.String("dsn", viper.GetString("dsn")),
+		logger := slog.With(
+			slog.Group(
+				"server",
+				slog.String("address", listener.Addr().String()),
+				slog.String("dsn", viper.GetString("dsn")),
+			),
 		)
-
-		slog.SetDefault(logger)
 
 		done := make(chan error, 1)
 
@@ -110,6 +121,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.consensus.yaml)")
+	rootCmd.PersistentFlags().String("nats", "nats://localhost:4222", "Nats URL")
 	rootCmd.Flags().StringP("address", "a", ":8000", "Address to listen and accept connections on.")
 	rootCmd.Flags().StringP("dsn", "d", "file:consensus.sqlite", "Data source name for the database.")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

@@ -47,6 +47,9 @@ github.com/hashicorp/hcl/json/token
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/klauspost/compress v1.17.2
+## explicit; go 1.18
+github.com/klauspost/compress/flate
 # github.com/lestrrat-go/blackmagic v1.0.2
 ## explicit; go 1.16
 github.com/lestrrat-go/blackmagic
@@ -95,6 +98,18 @@ github.com/mattn/go-sqlite3
 # github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
+# github.com/nats-io/nats.go v1.36.0
+## explicit; go 1.20
+github.com/nats-io/nats.go
+github.com/nats-io/nats.go/encoders/builtin
+github.com/nats-io/nats.go/internal/parser
+github.com/nats-io/nats.go/util
+# github.com/nats-io/nkeys v0.4.7
+## explicit; go 1.20
+github.com/nats-io/nkeys
+# github.com/nats-io/nuid v1.0.1
+## explicit
+github.com/nats-io/nuid
 # github.com/pelletier/go-toml/v2 v2.1.0
 ## explicit; go 1.16
 github.com/pelletier/go-toml/v2
@@ -161,11 +176,17 @@ go.uber.org/multierr
 # golang.org/x/crypto v0.24.0
 ## explicit; go 1.18
 golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/ed25519
+golang.org/x/crypto/internal/alias
+golang.org/x/crypto/internal/poly1305
+golang.org/x/crypto/nacl/box
+golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/salsa20/salsa
 # golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 ## explicit; go 1.20
 golang.org/x/exp/constraints

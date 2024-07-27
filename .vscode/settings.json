@@ -2,6 +2,7 @@
     "svn.ignoreMissingSvnWarning": true,
     "crosshair.enabled": true,
     "cSpell.words": [
+        "nats",
         "pflag",
         "timestamppb"
     ]

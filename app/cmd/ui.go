@@ -10,7 +10,6 @@ import (
 
 	"github.com/jenmud/consensus/app/cmd/ui"
 	"github.com/jenmud/consensus/business/service"
-	"github.com/jenmud/consensus/foundation/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -28,13 +27,14 @@ var uiCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		logger := logging.New(
-			slog.String("dsn", viper.GetString("dsn")),
-			slog.String("address", viper.GetString("address")),
-			slog.String("service", viper.GetString("service")),
+		logger := slog.With(
+			slog.Group(
+				"server",
+				slog.String("dsn", viper.GetString("dsn")),
+				slog.String("address", viper.GetString("address")),
+				slog.String("service", viper.GetString("service")),
+			),
 		)
-
-		slog.SetDefault(logger)
 
 		opts := []grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
